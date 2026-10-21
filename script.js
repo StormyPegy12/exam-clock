@@ -37,25 +37,45 @@ let selectedDefaultStartTime = localStorage.getItem("fhs_exam_starttime") || "08
 let selectedExamVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
 
 function refreshLiveClock() {
-    const systemDateObj = new Date();
-    const liveHours = systemDateObj.getHours();
-    const liveMinutes = systemDateObj.getMinutes();
-    const currentTotalMinutes = (liveHours * 60) + liveMinutes;
-
-    const formattedTimeString = systemDateObj.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+    // Force time evaluation specifically using Johannesburg / South African Time (SAST, UTC+2)
+    const options = {
+        timeZone: "Africa/Johannesburg",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
         hour12: false
+    };
+    
+    const formatter = new Intl.DateTimeFormat([], options);
+    const parts = formatter.formatToParts(new Date());
+    
+    let liveHours = 0, liveMinutes = 0, liveSeconds = 0;
+    let year = 2026, month = 1, day = 1;
+
+    parts.forEach(p => {
+        if (p.type === "hour") liveHours = parseInt(p.value, 10);
+        if (p.type === "minute") liveMinutes = parseInt(p.value, 10);
+        if (p.type === "second") liveSeconds = parseInt(p.value, 10);
+        if (p.type === "year") year = parseInt(p.value, 10);
+        if (p.type === "month") month = parseInt(p.value, 10) - 1;
+        if (p.type === "day") day = parseInt(p.value, 10);
     });
 
-    const [hStr, mStr, sStr] = formattedTimeString.split(":");
+    const currentTotalMinutes = (liveHours * 60) + liveMinutes;
+
+    const hStr = String(liveHours).padStart(2, "0");
+    const mStr = String(liveMinutes).padStart(2, "0");
+    const sStr = String(liveSeconds).padStart(2, "0");
 
     document.getElementById("clock").innerHTML =
         `${hStr}:${mStr}:<span class="seconds">${sStr}</span>`;
 
+    const joburgDateObj = new Date(year, month, day);
     document.getElementById("date").textContent =
-        systemDateObj.toLocaleDateString("en-GB", {
+        joburgDateObj.toLocaleDateString("en-GB", {
             weekday: "long",
             day: "numeric",
             month: "long",
@@ -148,7 +168,6 @@ function switchSchoolPhase(targetPhase) {
 
     populateVenueDropdown();
     
-    // Refresh Grade dropdowns
     const gradeList = getGradeOptionsForPhase();
     document.querySelectorAll(".grade-select").forEach(gradeSelect => {
         const existingGradeVal = gradeSelect.value;
@@ -171,7 +190,6 @@ function switchSchoolPhase(targetPhase) {
         }
     });
 
-    // Refresh Subject dropdowns
     document.querySelectorAll(".subject").forEach(subjectSelect => {
         const existingSubjectVal = subjectSelect.value;
         subjectSelect.innerHTML = "";

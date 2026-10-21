@@ -3,14 +3,14 @@
     --white: #ffffff;
     --clock: #00ccff;
     --seconds: #FF7C80;
-    --grey: #BCBDBD;
+    --grey: #B5A784; /* Updated gray background color */
     --header-text: #000080;
     --logo-size: 260px;
     --clock-size: 95px;
-    --date-size: 38px; /* Increased font for Date */
+    --date-size: 38px;
     --table-width: 90%;
-    --cell-size: 22px;
-    --button-size: 34px;
+    --cell-size: 26px; /* Increased table value font size */
+    --button-size: 36px;
 }
 
 body {
@@ -70,7 +70,7 @@ body {
 .date {
     margin-top: 2px;
     color: #cccccc;
-    font-size: var(--date-size); /* Increased font for Date */
+    font-size: var(--date-size);
 }
 
 .venue-selector-wrap {
@@ -109,13 +109,11 @@ th {
     border: 1px solid var(--bg);
 }
 
-/* Increased font for Exam Information header */
 .main-title-header {
     font-size: clamp(26px, 2.8vw, 42px);
     letter-spacing: 1.5px;
 }
 
-/* Increased font for all column headers */
 .col-header-text {
     font-size: clamp(20px, 2.2vw, 32px);
 }
@@ -171,7 +169,6 @@ td {
     text-align: center;
 }
 
-/* Remove block/borders around column select options while keeping table grid lines */
 td select {
     display: block;
     width: 100%;
@@ -233,7 +230,7 @@ td select:focus, td input:focus {
     border: 1px solid transparent;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     line-height: 1;
     cursor: pointer;

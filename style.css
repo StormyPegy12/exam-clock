@@ -5,35 +5,43 @@
     --seconds: #FF7C80;
     --grey: #BCBDBD;
     --header-text: #000080;
-    --logo-size: 320px;
-    --clock-size: 110px;
-    --date-size: 32px;
-    --heading-size: 36px;
-    --table-width: 85%;
-    --cell-size: 24px;
-    --button-size: 36px;
+    --logo-size: 260px;
+    --clock-size: 95px;
+    --date-size: 38px; /* Increased font for Date */
+    --table-width: 90%;
+    --cell-size: 22px;
+    --button-size: 34px;
 }
 
 body {
     margin: 0;
-    padding: 20px 10px;
+    padding: 10px;
     background: var(--bg);
     color: var(--white);
     font-family: Tahoma, sans-serif;
     text-align: center;
+    overflow: hidden; /* Prevents scrollbars on Smart Board */
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .container {
     width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    transform-origin: top center;
+    transition: transform 0.05s ease-out;
 }
 
 .header {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 40px;
-    padding: 10px;
-    margin-bottom: 20px;
+    gap: 35px;
+    padding: 5px;
+    margin-bottom: 15px;
 }
 
 .logo {
@@ -50,8 +58,8 @@ body {
     color: var(--clock);
     font-size: var(--clock-size);
     font-weight: bold;
-    line-height: 1.2;
-    margin: 5px 0;
+    line-height: 1.1;
+    margin: 4px 0;
 }
 
 .seconds {
@@ -60,23 +68,23 @@ body {
 }
 
 .date {
-    margin-top: 5px;
+    margin-top: 2px;
     color: #cccccc;
-    font-size: var(--date-size);
+    font-size: var(--date-size); /* Increased font for Date */
 }
 
 .venue-selector-wrap {
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .venue-select {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: 2px solid var(--clock);
-    font-size: 28px;
+    font-size: 26px;
     font-weight: bold;
     border-radius: 6px;
-    padding: 6px 15px;
+    padding: 4px 12px;
     text-align: center;
     text-align-last: center;
     cursor: pointer;
@@ -95,22 +103,26 @@ table {
 }
 
 th {
-    padding: 14px 10px;
+    padding: 12px 8px;
     background: var(--grey);
     color: var(--header-text);
-    font-size: clamp(16px, 1.8vw, 26px);
-    font-weight: bold;
     border: 1px solid var(--bg);
 }
 
+/* Increased font for Exam Information header */
 .main-title-header {
-    font-size: clamp(22px, 2.5vw, 36px);
-    letter-spacing: 1px;
+    font-size: clamp(26px, 2.8vw, 42px);
+    letter-spacing: 1.5px;
+}
+
+/* Increased font for all column headers */
+.col-header-text {
+    font-size: clamp(20px, 2.2vw, 32px);
 }
 
 .meta-row td {
     background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
+    padding: 8px;
     border: 1px solid var(--grey);
 }
 
@@ -127,26 +139,13 @@ th {
     color: var(--clock);
 }
 
-.inline-select {
-    background: var(--bg);
-    color: var(--white);
-    border: 1px solid var(--clock);
-    border-radius: 4px;
-    padding: 5px 15px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    outline: none;
-    width: auto;
-}
-
 .phase-toggle {
     display: inline-flex;
     gap: 10px;
 }
 
 .phase-btn {
-    padding: 6px 18px;
+    padding: 5px 16px;
     font-size: 18px;
     font-weight: bold;
     border: 1px solid var(--grey);
@@ -164,7 +163,7 @@ th {
 }
 
 td {
-    padding: 12px 8px;
+    padding: 10px 6px;
     border: 1px solid var(--grey);
     color: var(--white);
     font-size: var(--cell-size);
@@ -172,12 +171,36 @@ td {
     text-align: center;
 }
 
-select, input[type="text"] {
+/* Remove block/borders around column select options while keeping table grid lines */
+td select {
     display: block;
     width: 100%;
     box-sizing: border-box;
-    padding: 6px 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 6px;
+    border: none;
+    background: transparent;
+    color: var(--white);
+    font-family: Tahoma, sans-serif;
+    font-size: var(--cell-size);
+    font-weight: bold;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+    outline: none;
+}
+
+td select option {
+    background: var(--bg);
+    color: var(--white);
+}
+
+td input[type="text"], 
+td input[type="number"] {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     background: var(--bg);
     color: var(--white);
@@ -185,16 +208,14 @@ select, input[type="text"] {
     font-size: var(--cell-size);
     font-weight: bold;
     text-align: center;
-    text-align-last: center;
 }
 
-select:focus, input[type="text"]:focus {
-    border-color: var(--clock);
+td select:focus, td input:focus {
     outline: none;
 }
 
 .action-cell {
-    width: 90px;
+    width: 80px;
     white-space: nowrap;
 }
 
@@ -202,7 +223,7 @@ select:focus, input[type="text"]:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .row-btn {
@@ -212,7 +233,7 @@ select:focus, input[type="text"]:focus {
     border: 1px solid transparent;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     line-height: 1;
     cursor: pointer;
@@ -250,39 +271,20 @@ select:focus, input[type="text"]:focus {
     position: fixed;
     right: 15px;
     bottom: 15px;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     color: var(--white);
     font-family: Tahoma, sans-serif;
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
+    z-index: 1000;
 }
 
 .fullscreen-btn:hover {
     background: var(--clock);
     border-color: var(--clock);
     color: var(--bg);
-}
-
-@media (max-width: 1100px) {
-    :root {
-        --logo-size: 200px;
-        --clock-size: 70px;
-        --date-size: 22px;
-        --table-width: 98%;
-        --cell-size: 16px;
-    }
-
-    .header {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .venue-select {
-        font-size: 20px;
-    }
 }

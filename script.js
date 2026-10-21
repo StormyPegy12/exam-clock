@@ -13,7 +13,8 @@ const academicSubjectCatalog = {
         "Mathematics",
         "Tourism",
         "Life Science",
-        "Physical Science"
+        "Physical Science",
+        "Custom..."
     ],
     SENIOR: [
         "Afrikaans",
@@ -26,7 +27,8 @@ const academicSubjectCatalog = {
         "Social Sciences",
         "Technology",
         "Economic Management Sciences",
-        "Computers"
+        "Computers",
+        "Custom..."
     ]
 };
 
@@ -129,6 +131,14 @@ function populateVenueDropdown() {
     }
 }
 
+function getGradeOptionsForPhase() {
+    if (activeSchoolPhase === "FET") {
+        return ["Grade 12", "Grade 11", "Grade 10", "Grade 9", "Grade 8", "Grade 7"];
+    } else {
+        return ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+    }
+}
+
 function switchSchoolPhase(targetPhase) {
     activeSchoolPhase = targetPhase;
     localStorage.setItem("fhs_exam_phase", activeSchoolPhase);
@@ -138,17 +148,43 @@ function switchSchoolPhase(targetPhase) {
 
     populateVenueDropdown();
     
+    // Refresh Grade dropdowns
+    const gradeList = getGradeOptionsForPhase();
+    document.querySelectorAll(".grade-select").forEach(gradeSelect => {
+        const existingGradeVal = gradeSelect.value;
+        gradeSelect.innerHTML = "";
+        gradeList.forEach(gradeTitle => {
+            const optTag = document.createElement("option");
+            optTag.value = gradeTitle;
+            optTag.textContent = gradeTitle;
+            gradeSelect.appendChild(optTag);
+        });
+        const customGradeOpt = document.createElement("option");
+        customGradeOpt.value = "custom";
+        customGradeOpt.textContent = "Custom...";
+        gradeSelect.appendChild(customGradeOpt);
+
+        if (Array.from(gradeSelect.options).some(opt => opt.value === existingGradeVal || existingGradeVal.startsWith("custom:"))) {
+            gradeSelect.value = existingGradeVal;
+        } else {
+            gradeSelect.selectedIndex = 0;
+        }
+    });
+
+    // Refresh Subject dropdowns
     document.querySelectorAll(".subject").forEach(subjectSelect => {
         const existingSubjectVal = subjectSelect.value;
         subjectSelect.innerHTML = "";
         academicSubjectCatalog[activeSchoolPhase].forEach(subjectTitle => {
             const optTag = document.createElement("option");
             optTag.value = subjectTitle;
-            optTag.textContent = subjectTitle;
+            optTag.textContent = subjectTitle === "Custom..." ? "Custom..." : subjectTitle;
             subjectSelect.appendChild(optTag);
         });
-        if (academicSubjectCatalog[activeSchoolPhase].includes(existingSubjectVal)) {
+        if (Array.from(subjectSelect.options).some(opt => opt.value === existingSubjectVal || existingSubjectVal.startsWith("custom:"))) {
             subjectSelect.value = existingSubjectVal;
+        } else {
+            subjectSelect.selectedIndex = 0;
         }
     });
 
@@ -202,10 +238,18 @@ function buildExamRowNode() {
     const tableRowElement = document.createElement("tr");
     tableRowElement.className = "exam-row";
 
+    const gradeList = getGradeOptionsForPhase();
+    const gradeOptionsHtml = gradeList.map(g => `<option value="${g}">${g}</option>`).join("") + `<option value="custom">Custom...</option>`;
+
     const availableSubjectsList = academicSubjectCatalog[activeSchoolPhase];
     const generatedSubjectOptions = availableSubjectsList.map(subItem => `<option value="${subItem}">${subItem}</option>`).join("");
 
     tableRowElement.innerHTML = `
+        <td>
+            <select class="grade-select" aria-label="Grade">
+                ${gradeOptionsHtml}
+            </select>
+        </td>
         <td>
             <select class="subject" aria-label="Subject">
                 ${generatedSubjectOptions}
@@ -224,11 +268,11 @@ function buildExamRowNode() {
         </td>
         <td>
             <select class="duration-select" aria-label="Duration">
-                <option value="60">1 hour</option>
-                <option value="90">1.5 hours</option>
-                <option value="120" selected>2 hours</option>
-                <option value="150">2.5 hours</option>
-                <option value="180">3 hours</option>
+                <option value="60">1h</option>
+                <option value="90">1h 30m</option>
+                <option value="120" selected>2h</option>
+                <option value="150">2h 30m</option>
+                <option value="180">3h</option>
                 <option value="custom_mins">Custom Minutes...</option>
                 <option value="custom_time">Custom Time Length...</option>
             </select>
@@ -279,7 +323,7 @@ function refreshActionButtonsVisibility() {
         }
 
         if (addButtonNode) {
-            addButtonNode.classList.toggle("hidden", totalExamRows.length >= 5);
+            addButtonNode.classList.toggle("hidden", totalExamRows.length >= 7); // Updated max row limit to 7
         }
     });
 }
@@ -302,7 +346,7 @@ function scaleViewToFitScreen() {
 
 function insertNewExamRow(referenceRow) {
     const allRows = document.querySelectorAll(".exam-row");
-    if (allRows.length >= 5) return;
+    if (allRows.length >= 7) return; // Updated max row limit to 7
 
     const newlyCreatedRow = buildExamRowNode();
     if (referenceRow) {
@@ -354,6 +398,27 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("fhs_exam_venue", selectedExamVenue);
     });
 
+    // Assessment Header Selection Handler
+    document.getElementById("assessmentHeaderSelect").addEventListener("change", (eventObj) => {
+        const assessmentDropdown = eventObj.target;
+        if (assessmentDropdown.value === "custom") {
+            const customTitleInput = prompt("Enter custom option information (e.g. PRACTICAL ASSESSMENT):", "PRACTICAL ASSESSMENT");
+            if (customTitleInput && customTitleInput.trim() !== "") {
+                const cleanTitle = `${customTitleInput.trim().toUpperCase()} INFORMATION`;
+                let existingOpt = Array.from(assessmentDropdown.options).find(opt => opt.value === cleanTitle);
+                if (!existingOpt) {
+                    existingOpt = document.createElement("option");
+                    existingOpt.value = cleanTitle;
+                    existingOpt.textContent = cleanTitle;
+                    assessmentDropdown.insertBefore(existingOpt, assessmentDropdown.lastElementChild);
+                }
+                assessmentDropdown.value = existingOpt.value;
+            } else {
+                assessmentDropdown.value = "EXAM INFORMATION";
+            }
+        }
+    });
+
     insertNewExamRow();
 
     const rowsTableContainer = document.getElementById("examRows");
@@ -361,6 +426,48 @@ document.addEventListener("DOMContentLoaded", () => {
     rowsTableContainer.addEventListener("change", (eventObj) => {
         const parentExamRow = eventObj.target.closest(".exam-row");
         if (!parentExamRow) return;
+
+        // Custom Grade Selection Popup
+        if (eventObj.target.classList.contains("grade-select")) {
+            const gradeDropdown = eventObj.target;
+            if (gradeDropdown.value === "custom") {
+                const userGradeInput = prompt("Enter custom grade (e.g. Grade 6):");
+                if (userGradeInput && userGradeInput.trim() !== "") {
+                    const cleanGradeName = userGradeInput.trim();
+                    let existingGradeOpt = Array.from(gradeDropdown.options).find(opt => opt.value === `custom:${cleanGradeName}`);
+                    if (!existingGradeOpt) {
+                        existingGradeOpt = document.createElement("option");
+                        existingGradeOpt.value = `custom:${cleanGradeName}`;
+                        existingGradeOpt.textContent = cleanGradeName;
+                        gradeDropdown.insertBefore(existingGradeOpt, gradeDropdown.lastElementChild);
+                    }
+                    gradeDropdown.value = existingGradeOpt.value;
+                } else {
+                    gradeDropdown.selectedIndex = 0;
+                }
+            }
+        }
+
+        // Custom Subject Selection Popup
+        if (eventObj.target.classList.contains("subject")) {
+            const subjectDropdown = eventObj.target;
+            if (subjectDropdown.value === "Custom...") {
+                const userSubjectInput = prompt("Enter custom subject name:");
+                if (userSubjectInput && userSubjectInput.trim() !== "") {
+                    const cleanSubjectName = userSubjectInput.trim();
+                    let existingSubjectOpt = Array.from(subjectDropdown.options).find(opt => opt.value === `custom:${cleanSubjectName}`);
+                    if (!existingSubjectOpt) {
+                        existingSubjectOpt = document.createElement("option");
+                        existingSubjectOpt.value = `custom:${cleanSubjectName}`;
+                        existingSubjectOpt.textContent = cleanSubjectName;
+                        subjectDropdown.insertBefore(existingSubjectOpt, subjectDropdown.lastElementChild);
+                    }
+                    subjectDropdown.value = existingSubjectOpt.value;
+                } else {
+                    subjectDropdown.selectedIndex = 0;
+                }
+            }
+        }
 
         // Custom Paper Selection Popup
         if (eventObj.target.classList.contains("paper-select")) {
@@ -430,10 +537,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     durationDropdown.value = "120";
                 }
             } else if (durationDropdown.value === "custom_time") {
-                const userTimeLen = prompt("Enter custom time length (HH:MM format, e.g. 1:25):", "1:30");
+                const userTimeLen = prompt("Enter custom time length (HH:MM format, e.g. 1:45):", "1:45");
                 if (userTimeLen && /^\d{1,2}:\d{2}$/.test(userTimeLen.trim())) {
                     const cleanTimeLen = userTimeLen.trim();
-                    const displayText = `${cleanTimeLen} length`;
+                    const parts = cleanTimeLen.split(":");
+                    const hoursVal = parseInt(parts[0], 10);
+                    const minsVal = parseInt(parts[1], 10);
+                    const displayText = `${hoursVal}h ${minsVal}m`;
                     let existingTimeLenOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_time:${cleanTimeLen}`);
                     if (!existingTimeLenOpt) {
                         existingTimeLenOpt = document.createElement("option");

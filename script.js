@@ -1,4 +1,3 @@
-// Subject Lists
 const SUBJECT_LISTS = {
     FET: [
         "Accounting",
@@ -34,9 +33,7 @@ const SUBJECT_LISTS = {
 let currentPhase = localStorage.getItem("fhs_exam_phase") || "FET";
 let currentStartTimeStr = localStorage.getItem("fhs_exam_starttime") || "08:00";
 let currentVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
-let currentSession = localStorage.getItem("fhs_exam_session") || "Session 1";
 
-// Update Clock
 function updateClock() {
     const now = new Date();
     const time = now.toLocaleTimeString("en-GB", {
@@ -60,13 +57,11 @@ function updateClock() {
         });
 }
 
-// Convert "HH:MM" to minutes from midnight
 function parseTimeToMinutes(timeStr) {
     const [h, m] = timeStr.split(":").map(Number);
     return (h * 60) + m;
 }
 
-// Convert minutes from midnight to "HH:MM"
 function formatMinutesToTime(totalMinutes) {
     let mins = (totalMinutes + 24 * 60) % (24 * 60);
     const hours = String(Math.floor(mins / 60)).padStart(2, "0");
@@ -74,7 +69,6 @@ function formatMinutesToTime(totalMinutes) {
     return `${hours}:${minutes}`;
 }
 
-// Populate Venue Dropdown based on Phase
 function updateVenueOptions() {
     const venueSelect = document.getElementById("venueSelect");
     venueSelect.innerHTML = "";
@@ -104,7 +98,6 @@ function updateVenueOptions() {
     }
 }
 
-// Set Active Phase
 function setPhase(phase) {
     currentPhase = phase;
     localStorage.setItem("fhs_exam_phase", currentPhase);
@@ -114,7 +107,6 @@ function setPhase(phase) {
 
     updateVenueOptions();
     
-    // Refresh subject dropdowns
     document.querySelectorAll(".subject").forEach(select => {
         const previousValue = select.value;
         select.innerHTML = "";
@@ -128,18 +120,18 @@ function setPhase(phase) {
             select.value = previousValue;
         }
     });
+
+    autoFitScreen();
 }
 
-// Update calculated times for a single row
 function updateRowTimes(row) {
     const startSelect = row.querySelector(".start-select");
     const customStartInput = row.querySelector(".custom-start-input");
     const durationSelect = row.querySelector(".duration-select");
     const customDurationInput = row.querySelector(".custom-duration-input");
 
-    let startMins = 8 * 60; // default 08:00
+    let startMins = 8 * 60;
 
-    // Handle Start Time
     if (startSelect.value === "custom") {
         customStartInput.style.display = "block";
         const val = customStartInput.value;
@@ -151,12 +143,10 @@ function updateRowTimes(row) {
         startMins = parseTimeToMinutes(startSelect.value);
     }
 
-    // Reading time is strictly 10 minutes prior
     const readingMins = startMins - 10;
     row.querySelector(".readingTime").textContent = formatMinutesToTime(readingMins);
     row.querySelector(".startTimeDisplay").textContent = formatMinutesToTime(startMins);
 
-    // Handle Duration & Stop Time
     let durationMins = 60;
     if (durationSelect.value === "custom") {
         customDurationInput.style.display = "block";
@@ -168,14 +158,14 @@ function updateRowTimes(row) {
 
     const stopMins = startMins + durationMins;
     row.querySelector(".stopTime").textContent = formatMinutesToTime(stopMins);
+
+    autoFitScreen();
 }
 
-// Generate an Exam Row HTML
 function createRowElement() {
     const tr = document.createElement("tr");
     tr.className = "exam-row";
 
-    // Subjects
     const subjects = SUBJECT_LISTS[currentPhase];
     const subjectOpts = subjects.map(s => `<option value="${s}">${s}</option>`).join("");
 
@@ -195,7 +185,7 @@ function createRowElement() {
                 <option value="-">-</option>
                 <option value="custom">Custom...</option>
             </select>
-            <input type="text" class="custom-paper-input" placeholder="Enter paper" style="display:none; margin-top:5px;">
+            <input type="text" class="custom-paper-input" placeholder="Enter paper" style="display:none; margin-top:4px;">
         </td>
         <td>
             <select class="duration-select" aria-label="Duration">
@@ -206,7 +196,7 @@ function createRowElement() {
                 <option value="180">3 hours</option>
                 <option value="custom">Custom (mins)...</option>
             </select>
-            <input type="number" class="custom-duration-input" placeholder="Mins" min="1" value="60" style="display:none; margin-top:5px; width:100%;">
+            <input type="number" class="custom-duration-input" placeholder="Mins" min="1" value="60" style="display:none; margin-top:4px; width:100%;">
         </td>
         <td class="readingTime">07:50</td>
         <td>
@@ -218,8 +208,8 @@ function createRowElement() {
                 <option value="14:00">14:00</option>
                 <option value="custom">Custom...</option>
             </select>
-            <input type="text" class="custom-start-input" placeholder="HH:MM" value="08:00" style="display:none; margin-top:5px;">
-            <div class="startTimeDisplay" style="font-size: 0.8em; opacity: 0.8; margin-top:2px;">08:00</div>
+            <input type="text" class="custom-start-input" placeholder="HH:MM" value="08:00" style="display:none; margin-top:4px;">
+            <div class="startTimeDisplay" style="display:none;">08:00</div>
         </td>
         <td class="stopTime">10:00</td>
         <td class="action-cell">
@@ -230,7 +220,6 @@ function createRowElement() {
         </td>
     `;
 
-    // Initialize Start Time select value
     const startSelect = tr.querySelector(".start-select");
     if (["07:35", "08:00", "09:00", "12:00", "14:00"].includes(currentStartTimeStr)) {
         startSelect.value = currentStartTimeStr;
@@ -244,7 +233,6 @@ function createRowElement() {
     return tr;
 }
 
-// Sync Minus/Delete buttons display state
 function updateDeleteButtonsState() {
     const rows = document.querySelectorAll(".exam-row");
     rows.forEach(row => {
@@ -255,7 +243,23 @@ function updateDeleteButtonsState() {
     });
 }
 
-// Add row handler
+// Smart Board Auto-Scaling Engine
+function autoFitScreen() {
+    const container = document.getElementById("appContainer");
+    if (!container) return;
+
+    container.style.transform = "none";
+    const availableHeight = window.innerHeight;
+    const contentHeight = container.scrollHeight;
+
+    if (contentHeight > availableHeight - 10) {
+        const scaleFactor = (availableHeight - 20) / contentHeight;
+        container.style.transform = `scale(${Math.max(scaleFactor, 0.45)})`;
+    } else {
+        container.style.transform = "none";
+    }
+}
+
 function addRow(afterRow) {
     const newRow = createRowElement();
     if (afterRow) {
@@ -265,18 +269,18 @@ function addRow(afterRow) {
     }
     updateRowTimes(newRow);
     updateDeleteButtonsState();
+    autoFitScreen();
 }
 
-// Delete row handler
 function deleteRow(row) {
     const rows = document.querySelectorAll(".exam-row");
     if (rows.length > 1) {
         row.remove();
         updateDeleteButtonsState();
+        autoFitScreen();
     }
 }
 
-// Fullscreen Toggle
 async function toggleFullscreen() {
     try {
         if (!document.fullscreenElement) {
@@ -294,48 +298,33 @@ function updateFullscreenButton() {
         document.fullscreenElement ? "Exit Full Screen" : "Go Full Screen";
 }
 
-// Initialization
 document.addEventListener("DOMContentLoaded", () => {
-    // Clock
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Session dropdown setup
-    const sessionSelect = document.getElementById("sessionSelect");
-    sessionSelect.value = currentSession;
-    sessionSelect.addEventListener("change", (e) => {
-        currentSession = e.target.value;
-        localStorage.setItem("fhs_exam_session", currentSession);
-    });
-
-    // Phase toggle handlers
     document.getElementById("phaseFetBtn").addEventListener("click", () => setPhase("FET"));
     document.getElementById("phaseSeniorBtn").addEventListener("click", () => setPhase("SENIOR"));
     setPhase(currentPhase);
 
-    // Venue handler
     document.getElementById("venueSelect").addEventListener("change", (e) => {
         currentVenue = e.target.value;
         localStorage.setItem("fhs_exam_venue", currentVenue);
     });
 
-    // Initial Row Setup
     addRow();
 
-    // Event Delegation for Table Events
     const tableBody = document.getElementById("examRows");
 
     tableBody.addEventListener("change", (e) => {
         const row = e.target.closest(".exam-row");
         if (!row) return;
 
-        // Paper custom toggle
         if (e.target.classList.contains("paper-select")) {
             const customInput = row.querySelector(".custom-paper-input");
             customInput.style.display = e.target.value === "custom" ? "block" : "none";
+            autoFitScreen();
         }
 
-        // Start time changes
         if (e.target.classList.contains("start-select")) {
             if (e.target.value !== "custom") {
                 currentStartTimeStr = e.target.value;
@@ -343,7 +332,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Custom start time input
         if (e.target.classList.contains("custom-start-input")) {
             currentStartTimeStr = e.target.value;
             localStorage.setItem("fhs_exam_starttime", currentStartTimeStr);
@@ -354,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tableBody.addEventListener("input", (e) => {
         const row = e.target.closest(".exam-row");
-        if (row && (e.target.classList.contains("custom-duration-input") || e.target.classList.contains("custom-start-input"))) {
+        if (row && (e.target.classList.contains("custom-duration-input") || e.target.classList.contains("custom-start-input") || e.target.classList.contains("custom-paper-input"))) {
             updateRowTimes(row);
         }
     });
@@ -371,7 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Fullscreen Listeners
     document.getElementById("fsBtn").addEventListener("click", toggleFullscreen);
     document.addEventListener("fullscreenchange", updateFullscreenButton);
+    window.addEventListener("resize", autoFitScreen);
+
+    setTimeout(autoFitScreen, 100);
 });

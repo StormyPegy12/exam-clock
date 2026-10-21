@@ -9,9 +9,9 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="appContainer">
         <div class="header">
-            <!-- Uploaded FHS Logo integrated as Data URL -->
+            <!-- Uploaded FHS Logo integrated -->
             <img src="FHS Logo.png" alt="Fundamental High School Logo" class="logo">
             
             <div class="title-section">
@@ -33,20 +33,7 @@
                     <th colspan="7" class="main-title-header">EXAM INFORMATION</th>
                 </tr>
 
-                <!-- Session Selection Row below EXAM INFORMATION -->
-                <tr class="meta-row">
-                    <td colspan="7">
-                        <div class="meta-control">
-                            <span class="meta-label">Session:</span>
-                            <select id="sessionSelect" class="inline-select">
-                                <option value="Session 1">Session 1</option>
-                                <option value="Session 2">Session 2</option>
-                            </select>
-                        </div>
-                    </td>
-                </tr>
-
-                <!-- Phase Selection Row below Session -->
+                <!-- Phase Selection Row -->
                 <tr class="meta-row">
                     <td colspan="7">
                         <div class="meta-control">
@@ -61,17 +48,17 @@
 
                 <!-- Column Headers -->
                 <tr>
-                    <th id="subjectColHeader">Subject</th>
-                    <th>Paper</th>
-                    <th>Duration</th>
-                    <th>Reading</th>
-                    <th>Start</th>
-                    <th>Stop</th>
-                    <th>Add Subject</th>
+                    <th id="subjectColHeader" class="col-header-text">Subject</th>
+                    <th class="col-header-text">Paper</th>
+                    <th class="col-header-text">Duration</th>
+                    <th class="col-header-text">Reading</th>
+                    <th class="col-header-text">Start</th>
+                    <th class="col-header-text">Stop</th>
+                    <th class="col-header-text">Add Subject</th>
                 </tr>
             </thead>
             <tbody id="examRows">
-                <!-- Exam rows dynamically rendered & cloned via JavaScript -->
+                <!-- Exam rows dynamically rendered via JavaScript -->
             </tbody>
         </table>
     </div>

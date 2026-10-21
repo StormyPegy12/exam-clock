@@ -133,9 +133,9 @@ function populateVenueDropdown() {
 
 function getGradeOptionsForPhase() {
     if (activeSchoolPhase === "FET") {
-        return ["Grade 12", "Grade 11", "Grade 10", "Grade 9", "Grade 8", "Grade 7"];
+        return ["12", "11", "10", "9", "8", "7"];
     } else {
-        return ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+        return ["7", "8", "9", "10", "11", "12"];
     }
 }
 

@@ -9,7 +9,7 @@
     --clock-size: 95px;
     --date-size: 38px;
     --table-width: 92%;
-    --cell-size: 24px;
+    --cell-size: 28px; /* Increased table value font size */
     --button-size: 36px;
 }
 
@@ -103,7 +103,7 @@ table {
 }
 
 th {
-    padding: 12px 8px;
+    padding: 10px 6px;
     background: var(--grey);
     color: var(--header-text);
     border: 1px solid var(--bg);
@@ -119,7 +119,7 @@ th {
     border: none;
     color: var(--header-text);
     font-family: Tahoma, sans-serif;
-    font-size: clamp(26px, 2.8vw, 42px);
+    font-size: clamp(24px, 2.5vw, 38px);
     font-weight: bold;
     letter-spacing: 1.5px;
     text-align: center;
@@ -134,13 +134,15 @@ th {
     font-size: 22px;
 }
 
+/* Decreased font size for column headers so everything fits nicely */
 .col-header-text {
-    font-size: clamp(18px, 2vw, 28px);
+    font-size: clamp(14px, 1.4vw, 20px);
+    white-space: nowrap;
 }
 
 .meta-row td {
     background: rgba(255, 255, 255, 0.05);
-    padding: 14px 8px;
+    padding: 10px 8px;
     border: 1px solid var(--grey);
 }
 
@@ -152,7 +154,7 @@ th {
 }
 
 .meta-label {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     color: var(--clock);
 }
@@ -163,8 +165,8 @@ th {
 }
 
 .phase-btn {
-    padding: 8px 22px;
-    font-size: 18px;
+    padding: 6px 18px;
+    font-size: 16px;
     font-weight: bold;
     border: 2px solid var(--grey);
     background: transparent;
@@ -216,7 +218,7 @@ td select:focus {
 }
 
 .action-cell {
-    width: 80px;
+    width: 70px;
     white-space: nowrap;
 }
 

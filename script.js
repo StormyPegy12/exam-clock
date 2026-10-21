@@ -243,7 +243,6 @@ function updateDeleteButtonsState() {
     });
 }
 
-// Smart Board Auto-Scaling Engine
 function autoFitScreen() {
     const container = document.getElementById("appContainer");
     if (!container) return;

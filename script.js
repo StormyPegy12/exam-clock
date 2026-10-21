@@ -1,4 +1,4 @@
-const SUBJECT_LISTS = {
+const academicSubjectCatalog = {
     FET: [
         "Accounting",
         "Afrikaans",
@@ -30,149 +30,185 @@ const SUBJECT_LISTS = {
     ]
 };
 
-let currentPhase = localStorage.getItem("fhs_exam_phase") || "FET";
-let currentStartTimeStr = localStorage.getItem("fhs_exam_starttime") || "08:00";
-let currentVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
+let activeSchoolPhase = localStorage.getItem("fhs_exam_phase") || "FET";
+let selectedDefaultStartTime = localStorage.getItem("fhs_exam_starttime") || "08:00";
+let selectedExamVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
 
-function updateClock() {
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", {
+function refreshLiveClock() {
+    const systemDateObj = new Date();
+    const liveHours = systemDateObj.getHours();
+    const liveMinutes = systemDateObj.getMinutes();
+    const currentTotalMinutes = (liveHours * 60) + liveMinutes;
+
+    const formattedTimeString = systemDateObj.toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: false
     });
 
-    const [hours, minutes, seconds] = time.split(":");
+    const [hStr, mStr, sStr] = formattedTimeString.split(":");
 
     document.getElementById("clock").innerHTML =
-        `${hours}:${minutes}:<span class="seconds">${seconds}</span>`;
+        `${hStr}:${mStr}:<span class="seconds">${sStr}</span>`;
 
     document.getElementById("date").textContent =
-        now.toLocaleDateString("en-GB", {
+        systemDateObj.toLocaleDateString("en-GB", {
             weekday: "long",
             day: "numeric",
             month: "long",
             year: "numeric"
         });
+
+    document.querySelectorAll(".exam-row").forEach(tableRow => {
+        const readingNode = tableRow.querySelector(".readingTime");
+        const startSelectNode = tableRow.querySelector(".start-select");
+        const stopNode = tableRow.querySelector(".stopTime");
+
+        const readingMins = parseInt(tableRow.dataset.readingMins || "0", 10);
+        const startMins = parseInt(tableRow.dataset.startMins || "0", 10);
+        const stopMins = parseInt(tableRow.dataset.stopMins || "0", 10);
+
+        readingNode.className = "readingTime text-white";
+        startSelectNode.className = "start-select text-white";
+        stopNode.className = "stopTime text-white";
+
+        if (currentTotalMinutes >= readingMins) {
+            readingNode.className = "readingTime text-green";
+        }
+
+        if (currentTotalMinutes >= startMins) {
+            startSelectNode.className = "start-select text-green";
+            stopNode.className = "stopTime text-green";
+        }
+
+        if (currentTotalMinutes >= stopMins) {
+            stopNode.className = "stopTime text-red";
+        }
+    });
 }
 
-function parseTimeToMinutes(timeStr) {
-    const [h, m] = timeStr.split(":").map(Number);
+function convertClockStringToMinutes(timeInputStr) {
+    const [h, m] = timeInputStr.split(":").map(Number);
     return (h * 60) + m;
 }
 
-function formatMinutesToTime(totalMinutes) {
-    let mins = (totalMinutes + 24 * 60) % (24 * 60);
-    const hours = String(Math.floor(mins / 60)).padStart(2, "0");
-    const minutes = String(mins % 60).padStart(2, "0");
-    return `${hours}:${minutes}`;
+function convertMinutesToClockString(totalMinutesVal) {
+    let normalizedMins = (totalMinutesVal + 24 * 60) % (24 * 60);
+    const calculatedHours = String(Math.floor(normalizedMins / 60)).padStart(2, "0");
+    const calculatedMinutes = String(normalizedMins % 60).padStart(2, "0");
+    return `${calculatedHours}:${calculatedMinutes}`;
 }
 
-function updateVenueOptions() {
-    const venueSelect = document.getElementById("venueSelect");
-    venueSelect.innerHTML = "";
+function populateVenueDropdown() {
+    const venueDropdownNode = document.getElementById("venueSelect");
+    venueDropdownNode.innerHTML = "";
 
-    const options = ["Centre Number 12038"];
+    const venueList = ["Centre Number 12038"];
 
-    if (currentPhase === "FET") {
-        for (let i = 1; i <= 15; i++) options.push(`Classroom F${i}`);
+    if (activeSchoolPhase === "FET") {
+        for (let idx = 1; idx <= 15; idx++) venueList.push(`Classroom F${idx}`);
     } else {
-        for (let i = 1; i <= 15; i++) options.push(`Classroom S${i}`);
+        for (let idx = 1; idx <= 15; idx++) venueList.push(`Classroom S${idx}`);
     }
-    options.push("Hall");
+    venueList.push("Hall");
 
-    options.forEach(opt => {
-        const el = document.createElement("option");
-        el.value = opt;
-        el.textContent = opt;
-        venueSelect.appendChild(el);
+    venueList.forEach(venueName => {
+        const optionElem = document.createElement("option");
+        optionElem.value = venueName;
+        optionElem.textContent = venueName;
+        venueDropdownNode.appendChild(optionElem);
     });
 
-    if (options.includes(currentVenue)) {
-        venueSelect.value = currentVenue;
+    if (venueList.includes(selectedExamVenue)) {
+        venueDropdownNode.value = selectedExamVenue;
     } else {
-        venueSelect.value = "Centre Number 12038";
-        currentVenue = "Centre Number 12038";
-        localStorage.setItem("fhs_exam_venue", currentVenue);
+        venueDropdownNode.value = "Centre Number 12038";
+        selectedExamVenue = "Centre Number 12038";
+        localStorage.setItem("fhs_exam_venue", selectedExamVenue);
     }
 }
 
-function setPhase(phase) {
-    currentPhase = phase;
-    localStorage.setItem("fhs_exam_phase", currentPhase);
+function switchSchoolPhase(targetPhase) {
+    activeSchoolPhase = targetPhase;
+    localStorage.setItem("fhs_exam_phase", activeSchoolPhase);
 
-    document.getElementById("phaseFetBtn").classList.toggle("active", phase === "FET");
-    document.getElementById("phaseSeniorBtn").classList.toggle("active", phase === "SENIOR");
+    document.getElementById("phaseFetBtn").classList.toggle("active", targetPhase === "FET");
+    document.getElementById("phaseSeniorBtn").classList.toggle("active", targetPhase === "SENIOR");
 
-    updateVenueOptions();
+    populateVenueDropdown();
     
-    document.querySelectorAll(".subject").forEach(select => {
-        const previousValue = select.value;
-        select.innerHTML = "";
-        SUBJECT_LISTS[currentPhase].forEach(sub => {
-            const opt = document.createElement("option");
-            opt.value = sub;
-            opt.textContent = sub;
-            select.appendChild(opt);
+    document.querySelectorAll(".subject").forEach(subjectSelect => {
+        const existingSubjectVal = subjectSelect.value;
+        subjectSelect.innerHTML = "";
+        academicSubjectCatalog[activeSchoolPhase].forEach(subjectTitle => {
+            const optTag = document.createElement("option");
+            optTag.value = subjectTitle;
+            optTag.textContent = subjectTitle;
+            subjectSelect.appendChild(optTag);
         });
-        if (SUBJECT_LISTS[currentPhase].includes(previousValue)) {
-            select.value = previousValue;
+        if (academicSubjectCatalog[activeSchoolPhase].includes(existingSubjectVal)) {
+            subjectSelect.value = existingSubjectVal;
         }
     });
 
-    autoFitScreen();
+    scaleViewToFitScreen();
 }
 
-function updateRowTimes(row) {
-    const startSelect = row.querySelector(".start-select");
-    const customStartInput = row.querySelector(".custom-start-input");
-    const durationSelect = row.querySelector(".duration-select");
-    const customDurationInput = row.querySelector(".custom-duration-input");
+function recalculateRowSchedule(targetRow) {
+    const startTimeDropdown = targetRow.querySelector(".start-select");
+    const durationDropdown = targetRow.querySelector(".duration-select");
 
-    let startMins = 8 * 60;
+    let computedStartMinutes = 8 * 60;
+    const startDropdownValue = startTimeDropdown.value;
 
-    if (startSelect.value === "custom") {
-        customStartInput.style.display = "block";
-        const val = customStartInput.value;
-        if (/^\d{2}:\d{2}$/.test(val)) {
-            startMins = parseTimeToMinutes(val);
+    if (startDropdownValue.startsWith("custom:")) {
+        const customTimeStr = startDropdownValue.substring(startDropdownValue.indexOf(":") + 1);
+        computedStartMinutes = convertClockStringToMinutes(customTimeStr);
+    } else {
+        computedStartMinutes = convertClockStringToMinutes(startDropdownValue);
+    }
+
+    const computedReadingMinutes = computedStartMinutes - 10;
+    targetRow.querySelector(".readingTime").textContent = convertMinutesToClockString(computedReadingMinutes);
+    targetRow.dataset.readingMins = computedReadingMinutes;
+    targetRow.dataset.startMins = computedStartMinutes;
+
+    let computedDurationMinutes = 60;
+    const durationValue = durationDropdown.value;
+
+    if (durationValue.startsWith("custom_mins:")) {
+        computedDurationMinutes = parseInt(durationValue.substring(durationValue.indexOf(":") + 1), 10) || 0;
+    } else if (durationValue.startsWith("custom_time:")) {
+        const timeLenStr = durationValue.substring(durationValue.indexOf(":") + 1);
+        const parts = timeLenStr.split(":");
+        if (parts.length === 2) {
+            computedDurationMinutes = (parseInt(parts[0], 10) * 60) + (parseInt(parts[1], 10) || 0);
+        } else {
+            computedDurationMinutes = parseInt(timeLenStr, 10) || 0;
         }
     } else {
-        customStartInput.style.display = "none";
-        startMins = parseTimeToMinutes(startSelect.value);
+        computedDurationMinutes = parseInt(durationValue, 10) || 0;
     }
 
-    const readingMins = startMins - 10;
-    row.querySelector(".readingTime").textContent = formatMinutesToTime(readingMins);
-    row.querySelector(".startTimeDisplay").textContent = formatMinutesToTime(startMins);
+    const computedStopMinutes = computedStartMinutes + computedDurationMinutes;
+    targetRow.querySelector(".stopTime").textContent = convertMinutesToClockString(computedStopMinutes);
+    targetRow.dataset.stopMins = computedStopMinutes;
 
-    let durationMins = 60;
-    if (durationSelect.value === "custom") {
-        customDurationInput.style.display = "block";
-        durationMins = parseInt(customDurationInput.value, 10) || 0;
-    } else {
-        customDurationInput.style.display = "none";
-        durationMins = parseInt(durationSelect.value, 10) || 0;
-    }
-
-    const stopMins = startMins + durationMins;
-    row.querySelector(".stopTime").textContent = formatMinutesToTime(stopMins);
-
-    autoFitScreen();
+    scaleViewToFitScreen();
 }
 
-function createRowElement() {
-    const tr = document.createElement("tr");
-    tr.className = "exam-row";
+function buildExamRowNode() {
+    const tableRowElement = document.createElement("tr");
+    tableRowElement.className = "exam-row";
 
-    const subjects = SUBJECT_LISTS[currentPhase];
-    const subjectOpts = subjects.map(s => `<option value="${s}">${s}</option>`).join("");
+    const availableSubjectsList = academicSubjectCatalog[activeSchoolPhase];
+    const generatedSubjectOptions = availableSubjectsList.map(subItem => `<option value="${subItem}">${subItem}</option>`).join("");
 
-    tr.innerHTML = `
+    tableRowElement.innerHTML = `
         <td>
             <select class="subject" aria-label="Subject">
-                ${subjectOpts}
+                ${generatedSubjectOptions}
             </select>
         </td>
         <td>
@@ -185,7 +221,6 @@ function createRowElement() {
                 <option value="-">-</option>
                 <option value="custom">Custom...</option>
             </select>
-            <input type="text" class="custom-paper-input" placeholder="Enter paper" style="display:none; margin-top:4px;">
         </td>
         <td>
             <select class="duration-select" aria-label="Duration">
@@ -194,13 +229,13 @@ function createRowElement() {
                 <option value="120" selected>2 hours</option>
                 <option value="150">2.5 hours</option>
                 <option value="180">3 hours</option>
-                <option value="custom">Custom (mins)...</option>
+                <option value="custom_mins">Custom Minutes...</option>
+                <option value="custom_time">Custom Time Length...</option>
             </select>
-            <input type="number" class="custom-duration-input" placeholder="Mins" min="1" value="60" style="display:none; margin-top:4px; width:100%;">
         </td>
-        <td class="readingTime">07:50</td>
+        <td class="readingTime text-white">07:50</td>
         <td>
-            <select class="start-select" aria-label="Start Time">
+            <select class="start-select text-white" aria-label="Start Time">
                 <option value="07:35">07:35</option>
                 <option value="08:00">08:00</option>
                 <option value="09:00">09:00</option>
@@ -208,10 +243,8 @@ function createRowElement() {
                 <option value="14:00">14:00</option>
                 <option value="custom">Custom...</option>
             </select>
-            <input type="text" class="custom-start-input" placeholder="HH:MM" value="08:00" style="display:none; margin-top:4px;">
-            <div class="startTimeDisplay" style="display:none;">08:00</div>
         </td>
-        <td class="stopTime">10:00</td>
+        <td class="stopTime text-white">10:00</td>
         <td class="action-cell">
             <div class="action-btn-wrap">
                 <button type="button" class="row-btn add-btn" title="Add Row" aria-label="Add exam row">+</button>
@@ -220,147 +253,219 @@ function createRowElement() {
         </td>
     `;
 
-    const startSelect = tr.querySelector(".start-select");
-    if (["07:35", "08:00", "09:00", "12:00", "14:00"].includes(currentStartTimeStr)) {
-        startSelect.value = currentStartTimeStr;
+    const startSelectDropdown = tableRowElement.querySelector(".start-select");
+    if (["07:35", "08:00", "09:00", "12:00", "14:00"].includes(selectedDefaultStartTime)) {
+        startSelectDropdown.value = selectedDefaultStartTime;
     } else {
-        startSelect.value = "custom";
-        const customInput = tr.querySelector(".custom-start-input");
-        customInput.value = currentStartTimeStr;
-        customInput.style.display = "block";
+        const customOption = document.createElement("option");
+        customOption.value = `custom:${selectedDefaultStartTime}`;
+        customOption.textContent = selectedDefaultStartTime;
+        startSelectDropdown.insertBefore(customOption, startSelectDropdown.lastElementChild);
+        startSelectDropdown.value = customOption.value;
     }
 
-    return tr;
+    return tableRowElement;
 }
 
-function updateDeleteButtonsState() {
-    const rows = document.querySelectorAll(".exam-row");
-    rows.forEach(row => {
-        const delBtn = row.querySelector(".delete-btn");
-        if (delBtn) {
-            delBtn.classList.toggle("hidden", rows.length <= 1);
+function refreshActionButtonsVisibility() {
+    const totalExamRows = document.querySelectorAll(".exam-row");
+    
+    totalExamRows.forEach(rowItem => {
+        const deleteButtonNode = rowItem.querySelector(".delete-btn");
+        const addButtonNode = rowItem.querySelector(".add-btn");
+
+        if (deleteButtonNode) {
+            deleteButtonNode.classList.toggle("hidden", totalExamRows.length <= 1);
+        }
+
+        if (addButtonNode) {
+            addButtonNode.classList.toggle("hidden", totalExamRows.length >= 5);
         }
     });
 }
 
-function autoFitScreen() {
-    const container = document.getElementById("appContainer");
-    if (!container) return;
+function scaleViewToFitScreen() {
+    const mainAppContainer = document.getElementById("appContainer");
+    if (!mainAppContainer) return;
 
-    container.style.transform = "none";
-    const availableHeight = window.innerHeight;
-    const contentHeight = container.scrollHeight;
+    mainAppContainer.style.transform = "none";
+    const screenHeight = window.innerHeight;
+    const contentTotalHeight = mainAppContainer.scrollHeight;
 
-    if (contentHeight > availableHeight - 10) {
-        const scaleFactor = (availableHeight - 20) / contentHeight;
-        container.style.transform = `scale(${Math.max(scaleFactor, 0.45)})`;
+    if (contentTotalHeight > screenHeight - 10) {
+        const computedScale = (screenHeight - 20) / contentTotalHeight;
+        mainAppContainer.style.transform = `scale(${Math.max(computedScale, 0.4)})`;
     } else {
-        container.style.transform = "none";
+        mainAppContainer.style.transform = "none";
     }
 }
 
-function addRow(afterRow) {
-    const newRow = createRowElement();
-    if (afterRow) {
-        afterRow.after(newRow);
+function insertNewExamRow(referenceRow) {
+    const allRows = document.querySelectorAll(".exam-row");
+    if (allRows.length >= 5) return;
+
+    const newlyCreatedRow = buildExamRowNode();
+    if (referenceRow) {
+        referenceRow.after(newlyCreatedRow);
     } else {
-        document.getElementById("examRows").appendChild(newRow);
+        document.getElementById("examRows").appendChild(newlyCreatedRow);
     }
-    updateRowTimes(newRow);
-    updateDeleteButtonsState();
-    autoFitScreen();
+    recalculateRowSchedule(newlyCreatedRow);
+    refreshActionButtonsVisibility();
+    scaleViewToFitScreen();
 }
 
-function deleteRow(row) {
-    const rows = document.querySelectorAll(".exam-row");
-    if (rows.length > 1) {
-        row.remove();
-        updateDeleteButtonsState();
-        autoFitScreen();
+function removeExamRow(targetRow) {
+    const activeRowsList = document.querySelectorAll(".exam-row");
+    if (activeRowsList.length > 1) {
+        targetRow.remove();
+        refreshActionButtonsVisibility();
+        scaleViewToFitScreen();
     }
 }
 
-async function toggleFullscreen() {
+async function toggleDisplayFullscreen() {
     try {
         if (!document.fullscreenElement) {
             await document.documentElement.requestFullscreen();
         } else {
             await document.exitFullscreen();
         }
-    } catch (err) {
-        console.error("Fullscreen toggle failed:", err);
+    } catch (errorLog) {
+        console.error("Fullscreen toggle error:", errorLog);
     }
 }
 
-function updateFullscreenButton() {
+function updateFullscreenButtonText() {
     document.getElementById("fsBtn").textContent =
         document.fullscreenElement ? "Exit Full Screen" : "Go Full Screen";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    updateClock();
-    setInterval(updateClock, 1000);
+    refreshLiveClock();
+    setInterval(refreshLiveClock, 1000);
 
-    document.getElementById("phaseFetBtn").addEventListener("click", () => setPhase("FET"));
-    document.getElementById("phaseSeniorBtn").addEventListener("click", () => setPhase("SENIOR"));
-    setPhase(currentPhase);
+    document.getElementById("phaseFetBtn").addEventListener("click", () => switchSchoolPhase("FET"));
+    document.getElementById("phaseSeniorBtn").addEventListener("click", () => switchSchoolPhase("SENIOR"));
+    switchSchoolPhase(activeSchoolPhase);
 
-    document.getElementById("venueSelect").addEventListener("change", (e) => {
-        currentVenue = e.target.value;
-        localStorage.setItem("fhs_exam_venue", currentVenue);
+    document.getElementById("venueSelect").addEventListener("change", (eventObj) => {
+        selectedExamVenue = eventObj.target.value;
+        localStorage.setItem("fhs_exam_venue", selectedExamVenue);
     });
 
-    addRow();
+    insertNewExamRow();
 
-    const tableBody = document.getElementById("examRows");
+    const rowsTableContainer = document.getElementById("examRows");
 
-    tableBody.addEventListener("change", (e) => {
-        const row = e.target.closest(".exam-row");
-        if (!row) return;
+    rowsTableContainer.addEventListener("change", (eventObj) => {
+        const parentExamRow = eventObj.target.closest(".exam-row");
+        if (!parentExamRow) return;
 
-        if (e.target.classList.contains("paper-select")) {
-            const customInput = row.querySelector(".custom-paper-input");
-            customInput.style.display = e.target.value === "custom" ? "block" : "none";
-            autoFitScreen();
+        // Custom Paper Selection Popup
+        if (eventObj.target.classList.contains("paper-select")) {
+            const paperDropdown = eventObj.target;
+            if (paperDropdown.value === "custom") {
+                const userPaperInput = prompt("Enter custom paper (e.g. P4 or CAT):");
+                if (userPaperInput && userPaperInput.trim() !== "") {
+                    const cleanPaperName = userPaperInput.trim();
+                    let existingCustomOpt = Array.from(paperDropdown.options).find(opt => opt.value === `custom:${cleanPaperName}`);
+                    if (!existingCustomOpt) {
+                        existingCustomOpt = document.createElement("option");
+                        existingCustomOpt.value = `custom:${cleanPaperName}`;
+                        existingCustomOpt.textContent = cleanPaperName;
+                        paperDropdown.insertBefore(existingCustomOpt, paperDropdown.lastElementChild);
+                    }
+                    paperDropdown.value = existingCustomOpt.value;
+                } else {
+                    paperDropdown.value = "P1";
+                }
+            }
+            scaleViewToFitScreen();
         }
 
-        if (e.target.classList.contains("start-select")) {
-            if (e.target.value !== "custom") {
-                currentStartTimeStr = e.target.value;
-                localStorage.setItem("fhs_exam_starttime", currentStartTimeStr);
+        // Custom Start Time Selection Popup
+        if (eventObj.target.classList.contains("start-select")) {
+            const startDropdown = eventObj.target;
+            if (startDropdown.value === "custom") {
+                const userStartTime = prompt("Enter custom start time (HH:MM format, e.g. 08:30):", "08:30");
+                if (userStartTime && /^\d{1,2}:\d{2}$/.test(userStartTime.trim())) {
+                    const cleanTimeStr = userStartTime.trim();
+                    let existingTimeOpt = Array.from(startDropdown.options).find(opt => opt.value === `custom:${cleanTimeStr}`);
+                    if (!existingTimeOpt) {
+                        existingTimeOpt = document.createElement("option");
+                        existingTimeOpt.value = `custom:${cleanTimeStr}`;
+                        existingTimeOpt.textContent = cleanTimeStr;
+                        startDropdown.insertBefore(existingTimeOpt, startDropdown.lastElementChild);
+                    }
+                    startDropdown.value = existingTimeOpt.value;
+                    selectedDefaultStartTime = cleanTimeStr;
+                    localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
+                } else {
+                    startDropdown.value = "08:00";
+                }
+            } else if (!startDropdown.value.startsWith("custom:")) {
+                selectedDefaultStartTime = startDropdown.value;
+                localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
             }
         }
 
-        if (e.target.classList.contains("custom-start-input")) {
-            currentStartTimeStr = e.target.value;
-            localStorage.setItem("fhs_exam_starttime", currentStartTimeStr);
+        // Custom Duration Selection Popup
+        if (eventObj.target.classList.contains("duration-select")) {
+            const durationDropdown = eventObj.target;
+            if (durationDropdown.value === "custom_mins") {
+                const userMins = prompt("Enter custom duration in minutes (e.g. 90):", "90");
+                const parsedMins = parseInt(userMins, 10);
+                if (!isNaN(parsedMins) && parsedMins > 0) {
+                    const displayText = `${parsedMins} minutes`;
+                    let existingMinsOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_mins:${parsedMins}`);
+                    if (!existingMinsOpt) {
+                        existingMinsOpt = document.createElement("option");
+                        existingMinsOpt.value = `custom_mins:${parsedMins}`;
+                        existingMinsOpt.textContent = displayText;
+                        durationDropdown.insertBefore(existingMinsOpt, durationDropdown.querySelector("option[value='custom_mins']"));
+                    }
+                    durationDropdown.value = existingMinsOpt.value;
+                } else {
+                    durationDropdown.value = "120";
+                }
+            } else if (durationDropdown.value === "custom_time") {
+                const userTimeLen = prompt("Enter custom time length (HH:MM format, e.g. 1:25):", "1:30");
+                if (userTimeLen && /^\d{1,2}:\d{2}$/.test(userTimeLen.trim())) {
+                    const cleanTimeLen = userTimeLen.trim();
+                    const displayText = `${cleanTimeLen} length`;
+                    let existingTimeLenOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_time:${cleanTimeLen}`);
+                    if (!existingTimeLenOpt) {
+                        existingTimeLenOpt = document.createElement("option");
+                        existingTimeLenOpt.value = `custom_time:${cleanTimeLen}`;
+                        existingTimeLenOpt.textContent = displayText;
+                        durationDropdown.appendChild(existingTimeLenOpt);
+                    }
+                    durationDropdown.value = existingTimeLenOpt.value;
+                } else {
+                    durationDropdown.value = "120";
+                }
+            }
         }
 
-        updateRowTimes(row);
+        recalculateRowSchedule(parentExamRow);
     });
 
-    tableBody.addEventListener("input", (e) => {
-        const row = e.target.closest(".exam-row");
-        if (row && (e.target.classList.contains("custom-duration-input") || e.target.classList.contains("custom-start-input") || e.target.classList.contains("custom-paper-input"))) {
-            updateRowTimes(row);
+    rowsTableContainer.addEventListener("click", (eventObj) => {
+        const clickedButton = eventObj.target.closest("button");
+        if (!clickedButton) return;
+
+        const parentExamRow = clickedButton.closest(".exam-row");
+        if (clickedButton.classList.contains("add-btn")) {
+            insertNewExamRow(parentExamRow);
+        } else if (clickedButton.classList.contains("delete-btn")) {
+            removeExamRow(parentExamRow);
         }
     });
 
-    tableBody.addEventListener("click", (e) => {
-        const btn = e.target.closest("button");
-        if (!btn) return;
+    document.getElementById("fsBtn").addEventListener("click", toggleDisplayFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenButtonText);
+    window.addEventListener("resize", scaleViewToFitScreen);
 
-        const row = btn.closest(".exam-row");
-        if (btn.classList.contains("add-btn")) {
-            addRow(row);
-        } else if (btn.classList.contains("delete-btn")) {
-            deleteRow(row);
-        }
-    });
-
-    document.getElementById("fsBtn").addEventListener("click", toggleFullscreen);
-    document.addEventListener("fullscreenchange", updateFullscreenButton);
-    window.addEventListener("resize", autoFitScreen);
-
-    setTimeout(autoFitScreen, 100);
+    setTimeout(scaleViewToFitScreen, 100);
 });

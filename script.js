@@ -323,7 +323,7 @@ function refreshActionButtonsVisibility() {
         }
 
         if (addButtonNode) {
-            addButtonNode.classList.toggle("hidden", totalExamRows.length >= 7); // Updated max row limit to 7
+            addButtonNode.classList.toggle("hidden", totalExamRows.length >= 7);
         }
     });
 }
@@ -346,7 +346,7 @@ function scaleViewToFitScreen() {
 
 function insertNewExamRow(referenceRow) {
     const allRows = document.querySelectorAll(".exam-row");
-    if (allRows.length >= 7) return; // Updated max row limit to 7
+    if (allRows.length >= 7) return;
 
     const newlyCreatedRow = buildExamRowNode();
     if (referenceRow) {
@@ -398,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("fhs_exam_venue", selectedExamVenue);
     });
 
-    // Assessment Header Selection Handler
     document.getElementById("assessmentHeaderSelect").addEventListener("change", (eventObj) => {
         const assessmentDropdown = eventObj.target;
         if (assessmentDropdown.value === "custom") {
@@ -427,7 +426,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const parentExamRow = eventObj.target.closest(".exam-row");
         if (!parentExamRow) return;
 
-        // Custom Grade Selection Popup
         if (eventObj.target.classList.contains("grade-select")) {
             const gradeDropdown = eventObj.target;
             if (gradeDropdown.value === "custom") {
@@ -448,7 +446,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Custom Subject Selection Popup
         if (eventObj.target.classList.contains("subject")) {
             const subjectDropdown = eventObj.target;
             if (subjectDropdown.value === "Custom...") {
@@ -469,7 +466,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Custom Paper Selection Popup
         if (eventObj.target.classList.contains("paper-select")) {
             const paperDropdown = eventObj.target;
             if (paperDropdown.value === "custom") {
@@ -491,7 +487,6 @@ document.addEventListener("DOMContentLoaded", () => {
             scaleViewToFitScreen();
         }
 
-        // Custom Start Time Selection Popup
         if (eventObj.target.classList.contains("start-select")) {
             const startDropdown = eventObj.target;
             if (startDropdown.value === "custom") {
@@ -517,14 +512,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Custom Duration Selection Popup
         if (eventObj.target.classList.contains("duration-select")) {
             const durationDropdown = eventObj.target;
             if (durationDropdown.value === "custom_mins") {
                 const userMins = prompt("Enter custom duration in minutes (e.g. 90):", "90");
                 const parsedMins = parseInt(userMins, 10);
                 if (!isNaN(parsedMins) && parsedMins > 0) {
-                    const displayText = `${parsedMins} minutes`;
+                    const hoursPart = Math.floor(parsedMins / 60);
+                    const minsPart = parsedMins % 60;
+                    let displayText = "";
+                    if (hoursPart > 0 && minsPart > 0) displayText = `${hoursPart}h ${minsPart}m`;
+                    else if (hoursPart > 0) displayText = `${hoursPart}h`;
+                    else displayText = `${minsPart}m`;
+
                     let existingMinsOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_mins:${parsedMins}`);
                     if (!existingMinsOpt) {
                         existingMinsOpt = document.createElement("option");
@@ -543,7 +543,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     const parts = cleanTimeLen.split(":");
                     const hoursVal = parseInt(parts[0], 10);
                     const minsVal = parseInt(parts[1], 10);
-                    const displayText = `${hoursVal}h ${minsVal}m`;
+                    let displayText = "";
+                    if (hoursVal > 0 && minsVal > 0) displayText = `${hoursVal}h ${minsVal}m`;
+                    else if (hoursVal > 0) displayText = `${hoursVal}h`;
+                    else displayText = `${minsVal}m`;
+
                     let existingTimeLenOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_time:${cleanTimeLen}`);
                     if (!existingTimeLenOpt) {
                         existingTimeLenOpt = document.createElement("option");

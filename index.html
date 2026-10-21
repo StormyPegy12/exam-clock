@@ -28,11 +28,18 @@
         <table>
             <thead>
                 <tr>
-                    <th colspan="7" class="main-title-header">EXAM INFORMATION</th>
+                    <th colspan="8" class="main-title-header">
+                        <select id="assessmentHeaderSelect" class="assessment-header-select" aria-label="Assessment Type">
+                            <option value="EXAM INFORMATION">EXAM INFORMATION</option>
+                            <option value="CYCLE TEST INFORMATION">CYCLE TEST INFORMATION</option>
+                            <option value="INFORMAL TEST INFORMATION">INFORMAL TEST INFORMATION</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </th>
                 </tr>
 
                 <tr class="meta-row">
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="meta-control">
                             <span class="meta-label">Phase:</span>
                             <div class="phase-toggle">
@@ -44,6 +51,7 @@
                 </tr>
 
                 <tr>
+                    <th class="col-header-text">Grade</th>
                     <th id="subjectColHeader" class="col-header-text">Subject</th>
                     <th class="col-header-text">Paper</th>
                     <th class="col-header-text">Duration</th>

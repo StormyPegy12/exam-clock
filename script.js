@@ -26,7 +26,7 @@ const academicSubjectCatalog = {
         "Robotics",
         "Social Sciences",
         "Technology",
-        "Economic Management Sciences",
+        "EMS",
         "Computers",
         "Custom..."
     ]

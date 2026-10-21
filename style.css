@@ -3,13 +3,13 @@
     --white: #ffffff;
     --clock: #00ccff;
     --seconds: #FF7C80;
-    --gold: #B5A784; /* Updated gray background color */
+    --grey: #B5A784;
     --header-text: #000080;
     --logo-size: 260px;
     --clock-size: 95px;
     --date-size: 38px;
     --table-width: 90%;
-    --cell-size: 26px; /* Increased table value font size */
+    --cell-size: 26px;
     --button-size: 36px;
 }
 
@@ -20,7 +20,7 @@ body {
     color: var(--white);
     font-family: Tahoma, sans-serif;
     text-align: center;
-    overflow: hidden; /* Prevents scrollbars on Smart Board */
+    overflow: hidden;
     height: 100vh;
     display: flex;
     align-items: center;
@@ -104,7 +104,7 @@ table {
 
 th {
     padding: 12px 8px;
-    background: var(--gold);
+    background: var(--grey);
     color: var(--header-text);
     border: 1px solid var(--bg);
 }
@@ -120,36 +120,36 @@ th {
 
 .meta-row td {
     background: rgba(255, 255, 255, 0.05);
-    padding: 8px;
-    border: 1px solid var(--gold);
+    padding: 14px 8px;
+    border: 1px solid var(--grey);
 }
 
 .meta-control {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 25px;
 }
 
 .meta-label {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     color: var(--clock);
 }
 
 .phase-toggle {
     display: inline-flex;
-    gap: 10px;
+    gap: 15px;
 }
 
 .phase-btn {
-    padding: 5px 16px;
+    padding: 8px 22px;
     font-size: 18px;
     font-weight: bold;
-    border: 1px solid var(--gold);
+    border: 2px solid var(--grey);
     background: transparent;
     color: var(--white);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -162,7 +162,7 @@ th {
 
 td {
     padding: 10px 6px;
-    border: 1px solid var(--gold);
+    border: 1px solid var(--grey);
     color: var(--white);
     font-size: var(--cell-size);
     font-weight: bold;
@@ -176,7 +176,7 @@ td select {
     padding: 4px 6px;
     border: none;
     background: transparent;
-    color: var(--white);
+    color: inherit;
     font-family: Tahoma, sans-serif;
     font-size: var(--cell-size);
     font-weight: bold;
@@ -191,23 +191,7 @@ td select option {
     color: var(--white);
 }
 
-td input[type="text"], 
-td input[type="number"] {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 4px 6px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--white);
-    font-family: Tahoma, sans-serif;
-    font-size: var(--cell-size);
-    font-weight: bold;
-    text-align: center;
-}
-
-td select:focus, td input:focus {
+td select:focus {
     outline: none;
 }
 
@@ -260,8 +244,20 @@ td select:focus, td input:focus {
     color: var(--bg);
 }
 
-.delete-btn.hidden {
+.hidden {
     display: none !important;
+}
+
+.text-green {
+    color: #00ff66 !important;
+}
+
+.text-red {
+    color: #ff4d4d !important;
+}
+
+.text-white {
+    color: #ffffff !important;
 }
 
 .fullscreen-btn {

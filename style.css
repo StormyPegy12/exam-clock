@@ -8,8 +8,8 @@
     --logo-size: 260px;
     --clock-size: 95px;
     --date-size: 38px;
-    --table-width: 90%;
-    --cell-size: 26px;
+    --table-width: 92%;
+    --cell-size: 24px;
     --button-size: 36px;
 }
 
@@ -29,7 +29,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 1500px;
+    max-width: 1600px;
     margin: 0 auto;
     transform-origin: top center;
     transition: transform 0.05s ease-out;
@@ -110,12 +110,32 @@ th {
 }
 
 .main-title-header {
+    padding: 6px;
+}
+
+.assessment-header-select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--header-text);
+    font-family: Tahoma, sans-serif;
     font-size: clamp(26px, 2.8vw, 42px);
+    font-weight: bold;
     letter-spacing: 1.5px;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+    outline: none;
+}
+
+.assessment-header-select option {
+    background: var(--bg);
+    color: var(--white);
+    font-size: 22px;
 }
 
 .col-header-text {
-    font-size: clamp(20px, 2.2vw, 32px);
+    font-size: clamp(18px, 2vw, 28px);
 }
 
 .meta-row td {

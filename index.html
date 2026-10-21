@@ -11,6 +11,7 @@
 
     <div class="container">
         <div class="header">
+            <!-- Uploaded FHS Logo integrated as Data URL -->
             <img src="FHS Logo.png" alt="Fundamental High School Logo" class="logo">
             
             <div class="title-section">
@@ -27,10 +28,12 @@
 
         <table>
             <thead>
+                <!-- Main Header -->
                 <tr>
                     <th colspan="7" class="main-title-header">EXAM INFORMATION</th>
                 </tr>
 
+                <!-- Session Selection Row below EXAM INFORMATION -->
                 <tr class="meta-row">
                     <td colspan="7">
                         <div class="meta-control">
@@ -43,20 +46,22 @@
                     </td>
                 </tr>
 
+                <!-- Phase Selection Row below Session -->
                 <tr class="meta-row">
                     <td colspan="7">
                         <div class="meta-control">
                             <span class="meta-label">Phase:</span>
                             <div class="phase-toggle">
-                                <button type="button" id="phaseFetBtn" class="phase-btn">FET</button>
-                                <button type="button" id="phaseSeniorBtn" class="phase-btn">Senior</button>
+                                <button type="button" id="phaseFetBtn" class="phase-btn">FET Phase</button>
+                                <button type="button" id="phaseSeniorBtn" class="phase-btn">Senior Phase</button>
                             </div>
                         </div>
                     </td>
                 </tr>
 
+                <!-- Column Headers -->
                 <tr>
-                    <th class="subject-th">Subject</th>
+                    <th id="subjectColHeader">Subject</th>
                     <th>Paper</th>
                     <th>Duration</th>
                     <th>Reading</th>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Clock - Fundamental High School</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <!-- Uploaded FHS Logo integrated as Data URL -->
+            <img src="FHS Logo.png" alt="Fundamental High School Logo" class="logo">
+            
+            <div class="title-section">
+                <b><div id="date" class="date"></div></b>
+                <div id="clock" class="time"></div>
+                
+                <div class="venue-selector-wrap">
+                    <select id="venueSelect" class="venue-select" aria-label="Venue Selection">
+                        <!-- Options generated dynamically based on Phase -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <!-- Main Header -->
+                <tr>
+                    <th colspan="7" class="main-title-header">EXAM INFORMATION</th>
+                </tr>
+
+                <!-- Session Selection Row below EXAM INFORMATION -->
+                <tr class="meta-row">
+                    <td colspan="7">
+                        <div class="meta-control">
+                            <span class="meta-label">Session:</span>
+                            <select id="sessionSelect" class="inline-select">
+                                <option value="Session 1">Session 1</option>
+                                <option value="Session 2">Session 2</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Phase Selection Row below Session -->
+                <tr class="meta-row">
+                    <td colspan="7">
+                        <div class="meta-control">
+                            <span class="meta-label">Phase:</span>
+                            <div class="phase-toggle">
+                                <button type="button" id="phaseFetBtn" class="phase-btn">FET Phase</button>
+                                <button type="button" id="phaseSeniorBtn" class="phase-btn">Senior Phase</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Column Headers -->
+                <tr>
+                    <th id="subjectColHeader">Subject</th>
+                    <th>Paper</th>
+                    <th>Duration</th>
+                    <th>Reading</th>
+                    <th>Start</th>
+                    <th>Stop</th>
+                    <th>Add Subject</th>
+                </tr>
+            </thead>
+            <tbody id="examRows">
+                <!-- Exam rows dynamically rendered & cloned via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <button id="fsBtn" class="fullscreen-btn" type="button">Go Full Screen</button>
+
+</body>
+</html>

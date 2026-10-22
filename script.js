@@ -162,7 +162,6 @@ function refreshLiveClock() {
 
         if (currentTotalMinutes >= startMins) {
             startSelectNode.className = "start-select text-green";
-            stopNode.className = "stopTime text-green";
         }
 
         if (currentTotalMinutes >= stopMins) {

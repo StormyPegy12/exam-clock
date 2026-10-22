@@ -37,27 +37,28 @@ let activeSchoolPhase = localStorage.getItem("fhs_exam_phase") || "FET";
 let selectedDefaultStartTime = localStorage.getItem("fhs_exam_starttime") || "08:00";
 let selectedExamVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
 
-// Offset storage for Smart Board clock synchronization
-let deviceTimeOffsetMs = 0;
+function addCustomItemToStorage(storageKey, newItemValue) {
+    let list = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    if (!Array.isArray(list)) list = [];
+    list = list.filter(item => item !== newItemValue);
+    list.unshift(newItemValue);
+    if (list.length > 3) {
+        list = list.slice(0, 3);
+    }
+    localStorage.setItem(storageKey, JSON.stringify(list));
+}
 
-async function syncTimeWithNetwork() {
+function getCustomItemsFromStorage(storageKey) {
     try {
-        const response = await fetch("https://worldtimeapi.org/api/timezone/Africa/Johannesburg");
-        if (response.ok) {
-            const data = await response.json();
-            const networkDate = new Date(data.datetime);
-            const localDeviceDate = new Date();
-            deviceTimeOffsetMs = networkDate.getTime() - localDeviceDate.getTime();
-        }
+        let list = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        return Array.isArray(list) ? list : [];
     } catch (e) {
-        console.warn("Time sync network request unavailable, relying on SAST Intl timezone formatting.", e);
+        return [];
     }
 }
 
 function refreshLiveClock() {
-    // Correct local device time by network offset if device date/time is wrong
-    const correctedNow = new Date(Date.now() + deviceTimeOffsetMs);
-
+    // Force evaluation using South African Standard Time (Africa/Johannesburg, UTC+2)
     const options = {
         timeZone: "Africa/Johannesburg",
         year: "numeric",
@@ -70,7 +71,7 @@ function refreshLiveClock() {
     };
     
     const formatter = new Intl.DateTimeFormat([], options);
-    const parts = formatter.formatToParts(correctedNow);
+    const parts = formatter.formatToParts(new Date());
     
     let liveHours = 0, liveMinutes = 0, liveSeconds = 0;
     let year = 2026, month = 1, day = 1;
@@ -127,15 +128,15 @@ function refreshLiveClock() {
 
         if (currentTotalMinutes >= startMins) {
             startSelectNode.className = "start-select text-green";
+            stopNode.className = "stopTime text-green";
         }
 
         if (currentTotalMinutes >= stopMins) {
             stopNode.className = "stopTime text-red";
         }
 
-        // Skip updating text values when minimized
         const selectedGradeVal = gradeSelectNode ? gradeSelectNode.value : "";
-        const isGrade7 = (selectedGradeVal === "7" || selectedGradeVal === "Grade 7" || selectedGradeVal === "custom:7");
+        const isGrade7 = (selectedGradeVal === "7" || selectedGradeVal === "Grade 7" || selectedGradeVal === "custom:7" || selectedGradeVal.includes("7"));
 
         if (remainingNode && !remainingNode.classList.contains("minimized")) {
             if (isGrade7) {
@@ -209,6 +210,35 @@ function getGradeOptionsForPhase() {
     }
 }
 
+function populateDropdownWithCustoms(dropdownElem, baseList, customStorageKey, selectedVal) {
+    dropdownElem.innerHTML = "";
+    baseList.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item;
+        opt.textContent = item;
+        dropdownElem.appendChild(opt);
+    });
+
+    const customList = getCustomItemsFromStorage(customStorageKey);
+    customList.forEach(customVal => {
+        const customOpt = document.createElement("option");
+        customOpt.value = `custom:${customVal}`;
+        customOpt.textContent = customVal;
+        dropdownElem.insertBefore(customOpt, dropdownElem.lastElementChild);
+    });
+
+    const customPromptOpt = document.createElement("option");
+    customPromptOpt.value = "custom";
+    customPromptOpt.textContent = "Custom...";
+    dropdownElem.appendChild(customPromptOpt);
+
+    if (Array.from(dropdownElem.options).some(opt => opt.value === selectedVal || selectedVal.startsWith("custom:"))) {
+        dropdownElem.value = selectedVal;
+    } else {
+        dropdownElem.selectedIndex = 0;
+    }
+}
+
 function switchSchoolPhase(targetPhase) {
     activeSchoolPhase = targetPhase;
     localStorage.setItem("fhs_exam_phase", activeSchoolPhase);
@@ -220,40 +250,11 @@ function switchSchoolPhase(targetPhase) {
     
     const gradeList = getGradeOptionsForPhase();
     document.querySelectorAll(".grade-select").forEach(gradeSelect => {
-        const existingGradeVal = gradeSelect.value;
-        gradeSelect.innerHTML = "";
-        gradeList.forEach(gradeTitle => {
-            const optTag = document.createElement("option");
-            optTag.value = gradeTitle;
-            optTag.textContent = gradeTitle;
-            gradeSelect.appendChild(optTag);
-        });
-        const customGradeOpt = document.createElement("option");
-        customGradeOpt.value = "custom";
-        customGradeOpt.textContent = "Custom...";
-        gradeSelect.appendChild(customGradeOpt);
-
-        if (Array.from(gradeSelect.options).some(opt => opt.value === existingGradeVal || existingGradeVal.startsWith("custom:"))) {
-            gradeSelect.value = existingGradeVal;
-        } else {
-            gradeSelect.selectedIndex = 0;
-        }
+        populateDropdownWithCustoms(gradeSelect, gradeList, "fhs_custom_grades", gradeSelect.value);
     });
 
     document.querySelectorAll(".subject").forEach(subjectSelect => {
-        const existingSubjectVal = subjectSelect.value;
-        subjectSelect.innerHTML = "";
-        academicSubjectCatalog[activeSchoolPhase].forEach(subjectTitle => {
-            const optTag = document.createElement("option");
-            optTag.value = subjectTitle;
-            optTag.textContent = subjectTitle === "Custom..." ? "Custom..." : subjectTitle;
-            subjectSelect.appendChild(optTag);
-        });
-        if (Array.from(subjectSelect.options).some(opt => opt.value === existingSubjectVal || existingSubjectVal.startsWith("custom:"))) {
-            subjectSelect.value = existingSubjectVal;
-        } else {
-            subjectSelect.selectedIndex = 0;
-        }
+        populateDropdownWithCustoms(subjectSelect, academicSubjectCatalog[activeSchoolPhase], "fhs_custom_subjects", subjectSelect.value);
     });
 
     scaleViewToFitScreen();
@@ -312,23 +313,21 @@ function buildExamRowNode() {
     tableRowElement.className = "exam-row";
 
     const gradeList = getGradeOptionsForPhase();
-    const gradeOptionsHtml = gradeList.map(g => `<option value="${g}">${g}</option>`).join("") + `<option value="custom">Custom...</option>`;
-
     const availableSubjectsList = academicSubjectCatalog[activeSchoolPhase];
-    const generatedSubjectOptions = availableSubjectsList.map(subItem => `<option value="${subItem}">${subItem}</option>`).join("");
 
-    const isReadingMin = document.querySelector(".col-reading")?.classList.contains("minimized") ? " minimized" : "";
-    const isRemainingMin = document.querySelector(".col-remaining")?.classList.contains("minimized") ? " minimized" : "";
+    const isReadingMin = localStorage.getItem("fhs_min_reading") === "true" ? " minimized" : "";
+    const isRemainingMin = localStorage.getItem("fhs_min_remaining") === "true" ? " minimized" : "";
 
     tableRowElement.innerHTML = `
         <td>
             <select class="grade-select" aria-label="Grade">
-                ${gradeOptionsHtml}
+                ${gradeList.map(g => `<option value="${g}">${g}</option>`).join("")}
+                <option value="custom">Custom...</option>
             </select>
         </td>
         <td>
             <select class="subject" aria-label="Subject">
-                ${generatedSubjectOptions}
+                ${availableSubjectsList.map(s => `<option value="${s}">${s}</option>`).join("")}
             </select>
         </td>
         <td>
@@ -356,7 +355,7 @@ function buildExamRowNode() {
         <td class="readingTime col-reading text-white${isReadingMin}">07:50</td>
         <td>
             <select class="start-select text-white" aria-label="Start Time">
-                <option value="07:30">07:30</option>
+                <option value="07:35">07:35</option>
                 <option value="08:00">08:00</option>
                 <option value="09:00">09:00</option>
                 <option value="12:00">12:00</option>
@@ -374,15 +373,34 @@ function buildExamRowNode() {
         </td>
     `;
 
-    const startSelectDropdown = tableRowElement.querySelector(".start-select");
-    if (["07:30", "08:00", "09:00", "12:00", "14:00"].includes(selectedDefaultStartTime)) {
-        startSelectDropdown.value = selectedDefaultStartTime;
+    const gradeSel = tableRowElement.querySelector(".grade-select");
+    populateDropdownWithCustoms(gradeSel, gradeList, "fhs_custom_grades", gradeSel.value);
+
+    const subjSel = tableRowElement.querySelector(".subject");
+    populateDropdownWithCustoms(subjSel, availableSubjectsList, "fhs_custom_subjects", subjSel.value);
+
+    const paperSel = tableRowElement.querySelector(".paper-select");
+    const customPapers = getCustomItemsFromStorage("fhs_custom_papers");
+    customPapers.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = `custom:${p}`;
+        opt.textContent = p;
+        paperSel.insertBefore(opt, paperSel.lastElementChild);
+    });
+
+    const startSel = tableRowElement.querySelector(".start-select");
+    const customStarts = getCustomItemsFromStorage("fhs_custom_starts");
+    customStarts.forEach(st => {
+        const opt = document.createElement("option");
+        opt.value = `custom:${st}`;
+        opt.textContent = st;
+        startSel.insertBefore(opt, startSel.lastElementChild);
+    });
+
+    if (["07:35", "08:00", "09:00", "12:00", "14:00"].includes(selectedDefaultStartTime)) {
+        startSel.value = selectedDefaultStartTime;
     } else {
-        const customOption = document.createElement("option");
-        customOption.value = `custom:${selectedDefaultStartTime}`;
-        customOption.textContent = selectedDefaultStartTime;
-        startSelectDropdown.insertBefore(customOption, startSelectDropdown.lastElementChild);
-        startSelectDropdown.value = customOption.value;
+        startSel.value = `custom:${selectedDefaultStartTime}`;
     }
 
     return tableRowElement;
@@ -463,7 +481,6 @@ function updateFullscreenButtonText() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    syncTimeWithNetwork();
     refreshLiveClock();
     setInterval(refreshLiveClock, 1000);
 
@@ -476,12 +493,27 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("fhs_exam_venue", selectedExamVenue);
     });
 
-    document.getElementById("assessmentHeaderSelect").addEventListener("change", (eventObj) => {
-        const assessmentDropdown = eventObj.target;
+    const assessmentDropdown = document.getElementById("assessmentHeaderSelect");
+    const customHeaders = getCustomItemsFromStorage("fhs_custom_headers");
+    customHeaders.forEach(h => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        assessmentDropdown.insertBefore(opt, assessmentDropdown.lastElementChild);
+    });
+
+    const savedHeader = localStorage.getItem("fhs_assessment_header");
+    if (savedHeader && Array.from(assessmentDropdown.options).some(o => o.value === savedHeader)) {
+        assessmentDropdown.value = savedHeader;
+    }
+
+    assessmentDropdown.addEventListener("change", (eventObj) => {
         if (assessmentDropdown.value === "custom") {
             const customTitleInput = prompt("Enter custom option information (e.g. PRACTICAL ASSESSMENT):", "PRACTICAL ASSESSMENT");
             if (customTitleInput && customTitleInput.trim() !== "") {
                 const cleanTitle = `${customTitleInput.trim().toUpperCase()} INFORMATION`;
+                addCustomItemToStorage("fhs_custom_headers", cleanTitle);
+                
                 let existingOpt = Array.from(assessmentDropdown.options).find(opt => opt.value === cleanTitle);
                 if (!existingOpt) {
                     existingOpt = document.createElement("option");
@@ -494,7 +526,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 assessmentDropdown.value = "EXAM INFORMATION";
             }
         }
+        localStorage.setItem("fhs_assessment_header", assessmentDropdown.value);
     });
+
+    const isReadingMin = localStorage.getItem("fhs_min_reading") === "true";
+    if (isReadingMin) {
+        document.querySelectorAll(".col-reading").forEach(el => el.classList.add("minimized"));
+        document.getElementById("toggleReadingCol").textContent = "+";
+    }
+
+    const isRemainingMin = localStorage.getItem("fhs_min_remaining") === "true";
+    if (isRemainingMin) {
+        document.querySelectorAll(".col-remaining").forEach(el => el.classList.add("minimized"));
+        document.getElementById("toggleRemainingCol").textContent = "+";
+    }
 
     document.getElementById("toggleReadingCol").addEventListener("click", () => {
         const readingElements = document.querySelectorAll(".col-reading");
@@ -504,6 +549,8 @@ document.addEventListener("DOMContentLoaded", () => {
         readingElements.forEach(el => el.classList.toggle("minimized", willMinimize));
         btnElem.textContent = willMinimize ? "+" : "–";
         
+        localStorage.setItem("fhs_min_reading", willMinimize);
+
         if (!willMinimize) {
             document.querySelectorAll(".exam-row").forEach(recalculateRowSchedule);
         }
@@ -519,6 +566,8 @@ document.addEventListener("DOMContentLoaded", () => {
         remainingElements.forEach(el => el.classList.toggle("minimized", willMinimize));
         btnElem.textContent = willMinimize ? "+" : "–";
         
+        localStorage.setItem("fhs_min_remaining", willMinimize);
+
         if (!willMinimize) {
             refreshLiveClock();
         }
@@ -540,155 +589,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const userGradeInput = prompt("Enter custom grade (e.g. Grade 6):");
                 if (userGradeInput && userGradeInput.trim() !== "") {
                     const cleanGradeName = userGradeInput.trim();
-                    let existingGradeOpt = Array.from(gradeDropdown.options).find(opt => opt.value === `custom:${cleanGradeName}`);
-                    if (!existingGradeOpt) {
-                        existingGradeOpt = document.createElement("option");
-                        existingGradeOpt.value = `custom:${cleanGradeName}`;
-                        existingGradeOpt.textContent = cleanGradeName;
-                        gradeDropdown.insertBefore(existingGradeOpt, gradeDropdown.lastElementChild);
-                    }
-                    gradeDropdown.value = existingGradeOpt.value;
-                } else {
-                    gradeDropdown.selectedIndex = 0;
-                }
-            }
-            refreshLiveClock();
-        }
+                    addCustomItemToStorage("fhs_custom_grades", cleanGradeName);
 
-        if (eventObj.target.classList.contains("subject")) {
-            const subjectDropdown = eventObj.target;
-            if (subjectDropdown.value === "Custom...") {
-                const userSubjectInput = prompt("Enter custom subject name:");
-                if (userSubjectInput && userSubjectInput.trim() !== "") {
-                    const cleanSubjectName = userSubjectInput.trim();
-                    let existingSubjectOpt = Array.from(subjectDropdown.options).find(opt => opt.value === `custom:${cleanSubjectName}`);
-                    if (!existingSubjectOpt) {
-                        existingSubjectOpt = document.createElement("option");
-                        existingSubjectOpt.value = `custom:${cleanSubjectName}`;
-                        existingSubjectOpt.textContent = cleanSubjectName;
-                        subjectDropdown.insertBefore(existingSubjectOpt, subjectDropdown.lastElementChild);
-                    }
-                    subjectDropdown.value = existingSubjectOpt.value;
-                } else {
-                    subjectDropdown.selectedIndex = 0;
-                }
-            }
-        }
-
-        if (eventObj.target.classList.contains("paper-select")) {
-            const paperDropdown = eventObj.target;
-            if (paperDropdown.value === "custom") {
-                const userPaperInput = prompt("Enter custom paper (e.g. P4 or CAT):");
-                if (userPaperInput && userPaperInput.trim() !== "") {
-                    const cleanPaperName = userPaperInput.trim();
-                    let existingCustomOpt = Array.from(paperDropdown.options).find(opt => opt.value === `custom:${cleanPaperName}`);
-                    if (!existingCustomOpt) {
-                        existingCustomOpt = document.createElement("option");
-                        existingCustomOpt.value = `custom:${cleanPaperName}`;
-                        existingCustomOpt.textContent = cleanPaperName;
-                        paperDropdown.insertBefore(existingCustomOpt, paperDropdown.lastElementChild);
-                    }
-                    paperDropdown.value = existingCustomOpt.value;
-                } else {
-                    paperDropdown.value = "P1";
-                }
-            }
-            scaleViewToFitScreen();
-        }
-
-        if (eventObj.target.classList.contains("start-select")) {
-            const startDropdown = eventObj.target;
-            if (startDropdown.value === "custom") {
-                const userStartTime = prompt("Enter custom start time (HH:MM format, e.g. 08:30):", "08:30");
-                if (userStartTime && /^\d{1,2}:\d{2}$/.test(userStartTime.trim())) {
-                    const cleanTimeStr = userStartTime.trim();
-                    let existingTimeOpt = Array.from(startDropdown.options).find(opt => opt.value === `custom:${cleanTimeStr}`);
-                    if (!existingTimeOpt) {
-                        existingTimeOpt = document.createElement("option");
-                        existingTimeOpt.value = `custom:${cleanTimeStr}`;
-                        existingTimeOpt.textContent = cleanTimeStr;
-                        startDropdown.insertBefore(existingTimeOpt, startDropdown.lastElementChild);
-                    }
-                    startDropdown.value = existingTimeOpt.value;
-                    selectedDefaultStartTime = cleanTimeStr;
-                    localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
-                } else {
-                    startDropdown.value = "08:00";
-                }
-            } else if (!startDropdown.value.startsWith("custom:")) {
-                selectedDefaultStartTime = startDropdown.value;
-                localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
-            }
-        }
-
-        if (eventObj.target.classList.contains("duration-select")) {
-            const durationDropdown = eventObj.target;
-            if (durationDropdown.value === "custom_mins") {
-                const userMins = prompt("Enter custom duration in minutes (e.g. 90):", "90");
-                const parsedMins = parseInt(userMins, 10);
-                if (!isNaN(parsedMins) && parsedMins > 0) {
-                    const hoursPart = Math.floor(parsedMins / 60);
-                    const minsPart = parsedMins % 60;
-                    let displayText = "";
-                    if (hoursPart > 0 && minsPart > 0) displayText = `${hoursPart}h ${minsPart}m`;
-                    else if (hoursPart > 0) displayText = `${hoursPart}h`;
-                    else displayText = `${minsPart}m`;
-
-                    let existingMinsOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_mins:${parsedMins}`);
-                    if (!existingMinsOpt) {
-                        existingMinsOpt = document.createElement("option");
-                        existingMinsOpt.value = `custom_mins:${parsedMins}`;
-                        existingMinsOpt.textContent = displayText;
-                        durationDropdown.insertBefore(existingMinsOpt, durationDropdown.querySelector("option[value='custom_mins']"));
-                    }
-                    durationDropdown.value = existingMinsOpt.value;
-                } else {
-                    durationDropdown.value = "120";
-                }
-            } else if (durationDropdown.value === "custom_time") {
-                const userTimeLen = prompt("Enter custom time length (HH:MM format, e.g. 1:45):", "1:45");
-                if (userTimeLen && /^\d{1,2}:\d{2}$/.test(userTimeLen.trim())) {
-                    const cleanTimeLen = userTimeLen.trim();
-                    const parts = cleanTimeLen.split(":");
-                    const hoursVal = parseInt(parts[0], 10);
-                    const minsVal = parseInt(parts[1], 10);
-                    let displayText = "";
-                    if (hoursVal > 0 && minsVal > 0) displayText = `${hoursVal}h ${minsVal}m`;
-                    else if (hoursVal > 0) displayText = `${hoursVal}h`;
-                    else displayText = `${minsVal}m`;
-
-                    let existingTimeLenOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_time:${cleanTimeLen}`);
-                    if (!existingTimeLenOpt) {
-                        existingTimeLenOpt = document.createElement("option");
-                        existingTimeLenOpt.value = `custom_time:${cleanTimeLen}`;
-                        existingTimeLenOpt.textContent = displayText;
-                        durationDropdown.appendChild(existingTimeLenOpt);
-                    }
-                    durationDropdown.value = existingTimeLenOpt.value;
-                } else {
-                    durationDropdown.value = "120";
-                }
-            }
-        }
-
-        recalculateRowSchedule(parentExamRow);
-    });
-
-    rowsTableContainer.addEventListener("click", (eventObj) => {
-        const clickedButton = eventObj.target.closest("button");
-        if (!clickedButton) return;
-
-        const parentExamRow = clickedButton.closest(".exam-row");
-        if (clickedButton.classList.contains("add-btn")) {
-            insertNewExamRow(parentExamRow);
-        } else if (clickedButton.classList.contains("delete-btn")) {
-            removeExamRow(parentExamRow);
-        }
-    });
-
-    document.getElementById("fsBtn").addEventListener("click", toggleDisplayFullscreen);
-    document.addEventListener("fullscreenchange", updateFullscreenButtonText);
-    window.addEventListener("resize", scaleViewToFitScreen);
-
-    setTimeout(scaleViewToFitScreen, 100);
-});
+                    let

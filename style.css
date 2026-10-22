@@ -108,6 +108,7 @@ th {
     color: var(--header-text);
     border: 1px solid var(--bg);
     position: relative;
+    vertical-align: middle;
 }
 
 .main-title-header {
@@ -140,13 +141,16 @@ th {
     white-space: nowrap;
 }
 
-/* Expanded Duration column width so 3h 45m fits cleanly */
-.col-duration {
-    width: 120px;
-    min-width: 110px;
+.col-paper {
+    width: 75px;
+    min-width: 65px;
 }
 
-/* Header Toggle Buttons for Minimizing Columns */
+.col-duration {
+    width: 135px;
+    min-width: 120px;
+}
+
 .col-toggleable {
     padding-right: 22px !important;
 }
@@ -177,7 +181,6 @@ th {
     color: var(--grey);
 }
 
-/* Minimized Column Styles - Complete Content Suppression */
 .col-reading.minimized .col-title-text,
 .col-remaining.minimized .col-title-text {
     display: none;
@@ -185,8 +188,10 @@ th {
 
 .col-reading.minimized,
 .col-remaining.minimized {
-    width: 28px !important;
-    padding: 6px 2px !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    padding: 6px 1px !important;
 }
 
 td.col-reading.minimized,
@@ -194,6 +199,7 @@ td.col-remaining.minimized {
     font-size: 0px !important;
     color: transparent !important;
     line-height: 0 !important;
+    text-align: center !important;
 }
 
 td.col-reading.minimized::after,
@@ -202,7 +208,8 @@ td.col-remaining.minimized::after {
     font-size: 18px;
     line-height: 1;
     color: var(--grey);
-    display: block;
+    display: inline-block;
+    text-align: center;
 }
 
 .meta-row td {
@@ -254,6 +261,7 @@ td {
     font-size: var(--cell-size);
     font-weight: bold;
     text-align: center;
+    vertical-align: middle;
 }
 
 td select {

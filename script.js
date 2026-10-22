@@ -37,6 +37,38 @@ let activeSchoolPhase = localStorage.getItem("fhs_exam_phase") || "FET";
 let selectedDefaultStartTime = localStorage.getItem("fhs_exam_starttime") || "08:00";
 let selectedExamVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
 
+// Network time synchronization variables to bypass incorrect local system settings
+let networkTimeOffsetMs = 0;
+
+async function syncNetworkTime() {
+    try {
+        const res = await fetch("https://worldtimeapi.org/api/timezone/Africa/Johannesburg", { cache: "no-store" });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.datetime) {
+                const netDate = new Date(data.datetime);
+                if (!isNaN(netDate.getTime())) {
+                    networkTimeOffsetMs = netDate.getTime() - Date.now();
+                }
+            }
+        }
+    } catch (err) {
+        // Fallback: fetch official date header from the hosting server if time API is blocked
+        try {
+            const resHead = await fetch(window.location.href, { method: "HEAD", cache: "no-store" });
+            const serverDateStr = resHead.headers.get("Date");
+            if (serverDateStr) {
+                const serverDate = new Date(serverDateStr);
+                if (!isNaN(serverDate.getTime())) {
+                    networkTimeOffsetMs = serverDate.getTime() - Date.now();
+                }
+            }
+        } catch (e) {
+            console.warn("Network time sync fallback unavailable, using local device clock.");
+        }
+    }
+}
+
 function addCustomItemToStorage(storageKey, newItemValue) {
     let list = JSON.parse(localStorage.getItem(storageKey) || "[]");
     if (!Array.isArray(list)) list = [];
@@ -58,6 +90,9 @@ function getCustomItemsFromStorage(storageKey) {
 }
 
 function refreshLiveClock() {
+    // Apply network time offset to bypass incorrect local system settings
+    const correctedNow = new Date(Date.now() + networkTimeOffsetMs);
+
     const options = {
         timeZone: "Africa/Johannesburg",
         year: "numeric",
@@ -70,7 +105,7 @@ function refreshLiveClock() {
     };
     
     const formatter = new Intl.DateTimeFormat([], options);
-    const parts = formatter.formatToParts(new Date());
+    const parts = formatter.formatToParts(correctedNow);
     
     let liveHours = 0, liveMinutes = 0, liveSeconds = 0;
     let year = 2026, month = 1, day = 1;
@@ -479,9 +514,14 @@ function updateFullscreenButtonText() {
         document.fullscreenElement ? "Exit Full Screen" : "Go Full Screen";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // Automatically trigger full-screen on load for Smart Boards
     document.documentElement.requestFullscreen().catch(() => {});
+
+    // Fetch official network time upon loading
+    await syncNetworkTime();
+    // Re-sync network time every 5 minutes to prevent drift
+    setInterval(syncNetworkTime, 5 * 60 * 1000);
 
     refreshLiveClock();
     setInterval(refreshLiveClock, 1000);

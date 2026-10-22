@@ -8,8 +8,8 @@
     --logo-size: 260px;
     --clock-size: 95px;
     --date-size: 38px;
-    --table-width: 92%;
-    --cell-size: 28px; /* Increased table value font size */
+    --table-width: 95%;
+    --cell-size: 26px;
     --button-size: 36px;
 }
 
@@ -29,7 +29,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 1600px;
+    max-width: 1650px;
     margin: 0 auto;
     transform-origin: top center;
     transition: transform 0.05s ease-out;
@@ -103,10 +103,11 @@ table {
 }
 
 th {
-    padding: 10px 6px;
+    padding: 10px 4px;
     background: var(--grey);
     color: var(--header-text);
     border: 1px solid var(--bg);
+    position: relative;
 }
 
 .main-title-header {
@@ -134,10 +135,74 @@ th {
     font-size: 22px;
 }
 
-/* Decreased font size for column headers so everything fits nicely */
 .col-header-text {
-    font-size: clamp(14px, 1.4vw, 20px);
+    font-size: clamp(13px, 1.3vw, 19px);
     white-space: nowrap;
+}
+
+/* Expanded Duration column width so 3h 45m fits cleanly */
+.col-duration {
+    width: 120px;
+    min-width: 110px;
+}
+
+/* Header Toggle Buttons for Minimizing Columns */
+.col-toggleable {
+    padding-right: 22px !important;
+}
+
+.col-toggle-btn {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 128, 0.2);
+    color: var(--header-text);
+    border: 1px solid var(--header-text);
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    width: 16px;
+    height: 16px;
+    line-height: 12px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.col-toggle-btn:hover {
+    background: var(--header-text);
+    color: var(--grey);
+}
+
+/* Minimized Column Styles - Complete Content Suppression */
+.col-reading.minimized .col-title-text,
+.col-remaining.minimized .col-title-text {
+    display: none;
+}
+
+.col-reading.minimized,
+.col-remaining.minimized {
+    width: 28px !important;
+    padding: 6px 2px !important;
+}
+
+td.col-reading.minimized,
+td.col-remaining.minimized {
+    font-size: 0px !important;
+    color: transparent !important;
+    line-height: 0 !important;
+}
+
+td.col-reading.minimized::after,
+td.col-remaining.minimized::after {
+    content: "•";
+    font-size: 18px;
+    line-height: 1;
+    color: var(--grey);
+    display: block;
 }
 
 .meta-row td {
@@ -183,7 +248,7 @@ th {
 }
 
 td {
-    padding: 10px 6px;
+    padding: 10px 4px;
     border: 1px solid var(--grey);
     color: var(--white);
     font-size: var(--cell-size);
@@ -195,7 +260,7 @@ td select {
     display: block;
     width: 100%;
     box-sizing: border-box;
-    padding: 4px 6px;
+    padding: 4px 2px;
     border: none;
     background: transparent;
     color: inherit;
@@ -218,7 +283,7 @@ td select:focus {
 }
 
 .action-cell {
-    width: 70px;
+    width: 60px;
     white-space: nowrap;
 }
 
@@ -226,7 +291,7 @@ td select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .row-btn {

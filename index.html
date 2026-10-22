@@ -28,7 +28,7 @@
         <table>
             <thead>
                 <tr>
-                    <th colspan="8" class="main-title-header">
+                    <th colspan="9" class="main-title-header">
                         <select id="assessmentHeaderSelect" class="assessment-header-select" aria-label="Assessment Type">
                             <option value="EXAM INFORMATION">EXAM INFORMATION</option>
                             <option value="CYCLE TEST INFORMATION">CYCLE TEST INFORMATION</option>
@@ -39,7 +39,7 @@
                 </tr>
 
                 <tr class="meta-row">
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="meta-control">
                             <span class="meta-label">Phase:</span>
                             <div class="phase-toggle">
@@ -51,14 +51,21 @@
                 </tr>
 
                 <tr>
-                    <th class="col-header-text">Grade</th>
-                    <th id="subjectColHeader" class="col-header-text">Subject</th>
-                    <th class="col-header-text">Paper</th>
-                    <th class="col-header-text">Duration</th>
-                    <th class="col-header-text">Reading</th>
-                    <th class="col-header-text">Start</th>
-                    <th class="col-header-text">Stop</th>
-                    <th class="col-header-text">Add</th>
+                    <th class="col-header-text col-grade">Grade</th>
+                    <th id="subjectColHeader" class="col-header-text col-subject">Subject</th>
+                    <th class="col-header-text col-paper">Paper</th>
+                    <th class="col-header-text col-duration">Duration</th>
+                    <th class="col-header-text col-reading col-toggleable" id="readingTh">
+                        <span class="col-title-text">Reading</span>
+                        <button type="button" class="col-toggle-btn" id="toggleReadingCol" title="Minimize/Expand Column">–</button>
+                    </th>
+                    <th class="col-header-text col-start">Start</th>
+                    <th class="col-header-text col-stop">Stop</th>
+                    <th class="col-header-text col-remaining col-toggleable" id="remainingTh">
+                        <span class="col-title-text">Time Remaining</span>
+                        <button type="button" class="col-toggle-btn" id="toggleRemainingCol" title="Minimize/Expand Column">–</button>
+                    </th>
+                    <th class="col-header-text col-add">Add</th>
                 </tr>
             </thead>
             <tbody id="examRows">

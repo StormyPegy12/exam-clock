@@ -6,6 +6,7 @@ const academicSubjectCatalog = {
         "CAT",
         "EGD",
         "English",
+        "FS Mathematics",
         "History",
         "IT",
         "Life Orientation",
@@ -36,8 +37,27 @@ let activeSchoolPhase = localStorage.getItem("fhs_exam_phase") || "FET";
 let selectedDefaultStartTime = localStorage.getItem("fhs_exam_starttime") || "08:00";
 let selectedExamVenue = localStorage.getItem("fhs_exam_venue") || "Centre Number 12038";
 
+// Offset storage for Smart Board clock synchronization
+let deviceTimeOffsetMs = 0;
+
+async function syncTimeWithNetwork() {
+    try {
+        const response = await fetch("https://worldtimeapi.org/api/timezone/Africa/Johannesburg");
+        if (response.ok) {
+            const data = await response.json();
+            const networkDate = new Date(data.datetime);
+            const localDeviceDate = new Date();
+            deviceTimeOffsetMs = networkDate.getTime() - localDeviceDate.getTime();
+        }
+    } catch (e) {
+        console.warn("Time sync network request unavailable, relying on SAST Intl timezone formatting.", e);
+    }
+}
+
 function refreshLiveClock() {
-    // Force time evaluation specifically using Johannesburg / South African Time (SAST, UTC+2)
+    // Correct local device time by network offset if device date/time is wrong
+    const correctedNow = new Date(Date.now() + deviceTimeOffsetMs);
+
     const options = {
         timeZone: "Africa/Johannesburg",
         year: "numeric",
@@ -50,7 +70,7 @@ function refreshLiveClock() {
     };
     
     const formatter = new Intl.DateTimeFormat([], options);
-    const parts = formatter.formatToParts(new Date());
+    const parts = formatter.formatToParts(correctedNow);
     
     let liveHours = 0, liveMinutes = 0, liveSeconds = 0;
     let year = 2026, month = 1, day = 1;
@@ -65,6 +85,7 @@ function refreshLiveClock() {
     });
 
     const currentTotalMinutes = (liveHours * 60) + liveMinutes;
+    const currentTotalSeconds = (liveHours * 3600) + (liveMinutes * 60) + liveSeconds;
 
     const hStr = String(liveHours).padStart(2, "0");
     const mStr = String(liveMinutes).padStart(2, "0");
@@ -86,17 +107,22 @@ function refreshLiveClock() {
         const readingNode = tableRow.querySelector(".readingTime");
         const startSelectNode = tableRow.querySelector(".start-select");
         const stopNode = tableRow.querySelector(".stopTime");
+        const remainingNode = tableRow.querySelector(".remainingTime");
+        const gradeSelectNode = tableRow.querySelector(".grade-select");
 
         const readingMins = parseInt(tableRow.dataset.readingMins || "0", 10);
         const startMins = parseInt(tableRow.dataset.startMins || "0", 10);
         const stopMins = parseInt(tableRow.dataset.stopMins || "0", 10);
 
-        readingNode.className = "readingTime text-white";
+        readingNode.className = "readingTime col-reading text-white" + (readingNode.classList.contains("minimized") ? " minimized" : "");
         startSelectNode.className = "start-select text-white";
         stopNode.className = "stopTime text-white";
+        if (remainingNode) {
+            remainingNode.className = "remainingTime col-remaining text-white" + (remainingNode.classList.contains("minimized") ? " minimized" : "");
+        }
 
         if (currentTotalMinutes >= readingMins) {
-            readingNode.className = "readingTime text-green";
+            readingNode.className = "readingTime col-reading text-green" + (readingNode.classList.contains("minimized") ? " minimized" : "");
         }
 
         if (currentTotalMinutes >= startMins) {
@@ -105,6 +131,31 @@ function refreshLiveClock() {
 
         if (currentTotalMinutes >= stopMins) {
             stopNode.className = "stopTime text-red";
+        }
+
+        // Skip updating text values when minimized
+        const selectedGradeVal = gradeSelectNode ? gradeSelectNode.value : "";
+        const isGrade7 = (selectedGradeVal === "7" || selectedGradeVal === "Grade 7" || selectedGradeVal === "custom:7");
+
+        if (remainingNode && !remainingNode.classList.contains("minimized")) {
+            if (isGrade7) {
+                const stopTotalSeconds = stopMins * 60;
+                let diffSeconds = stopTotalSeconds - currentTotalSeconds;
+
+                if (diffSeconds > 0) {
+                    const remHours = Math.floor(diffSeconds / 3600);
+                    const remMinutes = Math.floor((diffSeconds % 3600) / 60);
+                    const remSecs = diffSeconds % 60;
+
+                    const formattedRem = `${String(remHours).padStart(2, "0")}:${String(remMinutes).padStart(2, "0")}:${String(remSecs).padStart(2, "0")}`;
+                    remainingNode.textContent = formattedRem;
+                } else {
+                    remainingNode.textContent = "00:00:00";
+                    remainingNode.className = "remainingTime col-remaining text-red";
+                }
+            } else {
+                remainingNode.textContent = "-";
+            }
         }
     });
 }
@@ -211,6 +262,7 @@ function switchSchoolPhase(targetPhase) {
 function recalculateRowSchedule(targetRow) {
     const startTimeDropdown = targetRow.querySelector(".start-select");
     const durationDropdown = targetRow.querySelector(".duration-select");
+    const readingCell = targetRow.querySelector(".readingTime");
 
     let computedStartMinutes = 8 * 60;
     const startDropdownValue = startTimeDropdown.value;
@@ -223,7 +275,11 @@ function recalculateRowSchedule(targetRow) {
     }
 
     const computedReadingMinutes = computedStartMinutes - 10;
-    targetRow.querySelector(".readingTime").textContent = convertMinutesToClockString(computedReadingMinutes);
+    
+    if (!readingCell.classList.contains("minimized")) {
+        readingCell.textContent = convertMinutesToClockString(computedReadingMinutes);
+    }
+    
     targetRow.dataset.readingMins = computedReadingMinutes;
     targetRow.dataset.startMins = computedStartMinutes;
 
@@ -261,6 +317,9 @@ function buildExamRowNode() {
     const availableSubjectsList = academicSubjectCatalog[activeSchoolPhase];
     const generatedSubjectOptions = availableSubjectsList.map(subItem => `<option value="${subItem}">${subItem}</option>`).join("");
 
+    const isReadingMin = document.querySelector(".col-reading")?.classList.contains("minimized") ? " minimized" : "";
+    const isRemainingMin = document.querySelector(".col-remaining")?.classList.contains("minimized") ? " minimized" : "";
+
     tableRowElement.innerHTML = `
         <td>
             <select class="grade-select" aria-label="Grade">
@@ -283,7 +342,7 @@ function buildExamRowNode() {
                 <option value="custom">Custom...</option>
             </select>
         </td>
-        <td>
+        <td class="col-duration">
             <select class="duration-select" aria-label="Duration">
                 <option value="60">1h</option>
                 <option value="90">1h 30m</option>
@@ -294,10 +353,10 @@ function buildExamRowNode() {
                 <option value="custom_time">Custom Time Length...</option>
             </select>
         </td>
-        <td class="readingTime text-white">07:50</td>
+        <td class="readingTime col-reading text-white${isReadingMin}">07:50</td>
         <td>
             <select class="start-select text-white" aria-label="Start Time">
-                <option value="07:35">07:35</option>
+                <option value="07:30">07:30</option>
                 <option value="08:00">08:00</option>
                 <option value="09:00">09:00</option>
                 <option value="12:00">12:00</option>
@@ -306,6 +365,7 @@ function buildExamRowNode() {
             </select>
         </td>
         <td class="stopTime text-white">10:00</td>
+        <td class="remainingTime col-remaining text-white${isRemainingMin}">-</td>
         <td class="action-cell">
             <div class="action-btn-wrap">
                 <button type="button" class="row-btn add-btn" title="Add Row" aria-label="Add exam row">+</button>
@@ -315,7 +375,7 @@ function buildExamRowNode() {
     `;
 
     const startSelectDropdown = tableRowElement.querySelector(".start-select");
-    if (["07:35", "08:00", "09:00", "12:00", "14:00"].includes(selectedDefaultStartTime)) {
+    if (["07:30", "08:00", "09:00", "12:00", "14:00"].includes(selectedDefaultStartTime)) {
         startSelectDropdown.value = selectedDefaultStartTime;
     } else {
         const customOption = document.createElement("option");
@@ -403,6 +463,7 @@ function updateFullscreenButtonText() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    syncTimeWithNetwork();
     refreshLiveClock();
     setInterval(refreshLiveClock, 1000);
 
@@ -435,6 +496,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    document.getElementById("toggleReadingCol").addEventListener("click", () => {
+        const readingElements = document.querySelectorAll(".col-reading");
+        const btnElem = document.getElementById("toggleReadingCol");
+        const willMinimize = !readingElements[0].classList.contains("minimized");
+
+        readingElements.forEach(el => el.classList.toggle("minimized", willMinimize));
+        btnElem.textContent = willMinimize ? "+" : "–";
+        
+        if (!willMinimize) {
+            document.querySelectorAll(".exam-row").forEach(recalculateRowSchedule);
+        }
+        
+        scaleViewToFitScreen();
+    });
+
+    document.getElementById("toggleRemainingCol").addEventListener("click", () => {
+        const remainingElements = document.querySelectorAll(".col-remaining");
+        const btnElem = document.getElementById("toggleRemainingCol");
+        const willMinimize = !remainingElements[0].classList.contains("minimized");
+
+        remainingElements.forEach(el => el.classList.toggle("minimized", willMinimize));
+        btnElem.textContent = willMinimize ? "+" : "–";
+        
+        if (!willMinimize) {
+            refreshLiveClock();
+        }
+        
+        scaleViewToFitScreen();
+    });
+
     insertNewExamRow();
 
     const rowsTableContainer = document.getElementById("examRows");
@@ -461,6 +552,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     gradeDropdown.selectedIndex = 0;
                 }
             }
+            refreshLiveClock();
         }
 
         if (eventObj.target.classList.contains("subject")) {

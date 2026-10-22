@@ -58,7 +58,6 @@ function getCustomItemsFromStorage(storageKey) {
 }
 
 function refreshLiveClock() {
-    // Force evaluation using South African Standard Time (Africa/Johannesburg, UTC+2)
     const options = {
         timeZone: "Africa/Johannesburg",
         year: "numeric",
@@ -481,6 +480,9 @@ function updateFullscreenButtonText() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Automatically trigger full-screen on load for Smart Boards
+    document.documentElement.requestFullscreen().catch(() => {});
+
     refreshLiveClock();
     setInterval(refreshLiveClock, 1000);
 
@@ -591,4 +593,161 @@ document.addEventListener("DOMContentLoaded", () => {
                     const cleanGradeName = userGradeInput.trim();
                     addCustomItemToStorage("fhs_custom_grades", cleanGradeName);
 
-                    let
+                    let existingGradeOpt = Array.from(gradeDropdown.options).find(opt => opt.value === `custom:${cleanGradeName}`);
+                    if (!existingGradeOpt) {
+                        existingGradeOpt = document.createElement("option");
+                        existingGradeOpt.value = `custom:${cleanGradeName}`;
+                        existingGradeOpt.textContent = cleanGradeName;
+                        gradeDropdown.insertBefore(existingGradeOpt, gradeDropdown.lastElementChild);
+                    }
+                    gradeDropdown.value = existingGradeOpt.value;
+                } else {
+                    gradeDropdown.selectedIndex = 0;
+                }
+            }
+            refreshLiveClock();
+        }
+
+        if (eventObj.target.classList.contains("subject")) {
+            const subjectDropdown = eventObj.target;
+            if (subjectDropdown.value === "Custom...") {
+                const userSubjectInput = prompt("Enter custom subject name:");
+                if (userSubjectInput && userSubjectInput.trim() !== "") {
+                    const cleanSubjectName = userSubjectInput.trim();
+                    addCustomItemToStorage("fhs_custom_subjects", cleanSubjectName);
+
+                    let existingSubjectOpt = Array.from(subjectDropdown.options).find(opt => opt.value === `custom:${cleanSubjectName}`);
+                    if (!existingSubjectOpt) {
+                        existingSubjectOpt = document.createElement("option");
+                        existingSubjectOpt.value = `custom:${cleanSubjectName}`;
+                        existingSubjectOpt.textContent = cleanSubjectName;
+                        subjectDropdown.insertBefore(existingSubjectOpt, subjectDropdown.lastElementChild);
+                    }
+                    subjectDropdown.value = existingSubjectOpt.value;
+                } else {
+                    subjectDropdown.selectedIndex = 0;
+                }
+            }
+        }
+
+        if (eventObj.target.classList.contains("paper-select")) {
+            const paperDropdown = eventObj.target;
+            if (paperDropdown.value === "custom") {
+                const userPaperInput = prompt("Enter custom paper (e.g. P4 or CAT):");
+                if (userPaperInput && userPaperInput.trim() !== "") {
+                    const cleanPaperName = userPaperInput.trim();
+                    addCustomItemToStorage("fhs_custom_papers", cleanPaperName);
+
+                    let existingCustomOpt = Array.from(paperDropdown.options).find(opt => opt.value === `custom:${cleanPaperName}`);
+                    if (!existingCustomOpt) {
+                        existingCustomOpt = document.createElement("option");
+                        existingCustomOpt.value = `custom:${cleanPaperName}`;
+                        existingCustomOpt.textContent = cleanPaperName;
+                        paperDropdown.insertBefore(existingCustomOpt, paperDropdown.lastElementChild);
+                    }
+                    paperDropdown.value = existingCustomOpt.value;
+                } else {
+                    paperDropdown.value = "P1";
+                }
+            }
+            scaleViewToFitScreen();
+        }
+
+        if (eventObj.target.classList.contains("start-select")) {
+            const startDropdown = eventObj.target;
+            if (startDropdown.value === "custom") {
+                const userStartTime = prompt("Enter custom start time (HH:MM format, e.g. 08:30):", "08:30");
+                if (userStartTime && /^\d{1,2}:\d{2}$/.test(userStartTime.trim())) {
+                    const cleanTimeStr = userStartTime.trim();
+                    addCustomItemToStorage("fhs_custom_starts", cleanTimeStr);
+
+                    let existingTimeOpt = Array.from(startDropdown.options).find(opt => opt.value === `custom:${cleanTimeStr}`);
+                    if (!existingTimeOpt) {
+                        existingTimeOpt = document.createElement("option");
+                        existingTimeOpt.value = `custom:${cleanTimeStr}`;
+                        existingTimeOpt.textContent = cleanTimeStr;
+                        startDropdown.insertBefore(existingTimeOpt, startDropdown.lastElementChild);
+                    }
+                    startDropdown.value = existingTimeOpt.value;
+                    selectedDefaultStartTime = cleanTimeStr;
+                    localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
+                } else {
+                    startDropdown.value = "08:00";
+                }
+            } else if (!startDropdown.value.startsWith("custom:")) {
+                selectedDefaultStartTime = startDropdown.value;
+                localStorage.setItem("fhs_exam_starttime", selectedDefaultStartTime);
+            }
+        }
+
+        if (eventObj.target.classList.contains("duration-select")) {
+            const durationDropdown = eventObj.target;
+            if (durationDropdown.value === "custom_mins") {
+                const userMins = prompt("Enter custom duration in minutes (e.g. 90):", "90");
+                const parsedMins = parseInt(userMins, 10);
+                if (!isNaN(parsedMins) && parsedMins > 0) {
+                    const hoursPart = Math.floor(parsedMins / 60);
+                    const minsPart = parsedMins % 60;
+                    let displayText = "";
+                    if (hoursPart > 0 && minsPart > 0) displayText = `${hoursPart}h ${minsPart}m`;
+                    else if (hoursPart > 0) displayText = `${hoursPart}h`;
+                    else displayText = `${minsPart}m`;
+
+                    let existingMinsOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_mins:${parsedMins}`);
+                    if (!existingMinsOpt) {
+                        existingMinsOpt = document.createElement("option");
+                        existingMinsOpt.value = `custom_mins:${parsedMins}`;
+                        existingMinsOpt.textContent = displayText;
+                        durationDropdown.insertBefore(existingMinsOpt, durationDropdown.querySelector("option[value='custom_mins']"));
+                    }
+                    durationDropdown.value = existingMinsOpt.value;
+                } else {
+                    durationDropdown.value = "120";
+                }
+            } else if (durationDropdown.value === "custom_time") {
+                const userTimeLen = prompt("Enter custom time length (HH:MM format, e.g. 1:45):", "1:45");
+                if (userTimeLen && /^\d{1,2}:\d{2}$/.test(userTimeLen.trim())) {
+                    const cleanTimeLen = userTimeLen.trim();
+                    const parts = cleanTimeLen.split(":");
+                    const hoursVal = parseInt(parts[0], 10);
+                    const minsVal = parseInt(parts[1], 10);
+                    let displayText = "";
+                    if (hoursVal > 0 && minsVal > 0) displayText = `${hoursVal}h ${minsVal}m`;
+                    else if (hoursVal > 0) displayText = `${hoursVal}h`;
+                    else displayText = `${minsVal}m`;
+
+                    let existingTimeLenOpt = Array.from(durationDropdown.options).find(opt => opt.value === `custom_time:${cleanTimeLen}`);
+                    if (!existingTimeLenOpt) {
+                        existingTimeLenOpt = document.createElement("option");
+                        existingTimeLenOpt.value = `custom_time:${cleanTimeLen}`;
+                        existingTimeLenOpt.textContent = displayText;
+                        durationDropdown.appendChild(existingTimeLenOpt);
+                    }
+                    durationDropdown.value = existingTimeLenOpt.value;
+                } else {
+                    durationDropdown.value = "120";
+                }
+            }
+        }
+
+        recalculateRowSchedule(parentExamRow);
+    });
+
+    rowsTableContainer.addEventListener("click", (eventObj) => {
+        const clickedButton = eventObj.target.closest("button");
+        if (!clickedButton) return;
+
+        const parentExamRow = clickedButton.closest(".exam-row");
+        if (clickedButton.classList.contains("add-btn")) {
+            insertNewExamRow(parentExamRow);
+        } else if (clickedButton.classList.contains("delete-btn")) {
+            removeExamRow(parentExamRow);
+        }
+    });
+
+    document.getElementById("fsBtn").addEventListener("click", toggleDisplayFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenButtonText);
+    window.addEventListener("resize", scaleViewToFitScreen);
+
+    setTimeout(scaleViewToFitScreen, 100);
+});

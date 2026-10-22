@@ -13,15 +13,16 @@
     --button-size: 36px;
 }
 
-body {
+html, body {
     margin: 0;
-    padding: 10px;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
     background: var(--bg);
     color: var(--white);
     font-family: Tahoma, sans-serif;
     text-align: center;
     overflow: hidden;
-    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
